@@ -50,13 +50,14 @@
 	<div id="main">
 		<div id="home" class="hideContent">
 			<!-- TODO repo sorting? -->
-			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<!--<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>-->
 			<div id="welcome">Welcome! Press the <i class="fas fa-plus-circle"></i> button below to add or scan from repositories.</div>
 		</div>
 		<div id="projects" class="hideContent" style="text-align:center">
 			Add a new repository to monitor.<br />
 			<button class="pageButton" onclick="pickDirectory()">Single Directory</button><br />
 			<button class="pageButton" onclick="scanDirectory();">Scan Directories</button><br />
+			<button class="pageButton" onclick="removeAllDirectories()">Remove All Repos</button>
 			<!-- TODO remove all repos -->
 		</div>
 		<div id="settings" class="hideContent">Settings content</div>

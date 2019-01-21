@@ -92,5 +92,16 @@ ipcRendererStatus.on('setGitStatus', function (event, gitStatusResult) {
 
 		document.getElementById('home').appendChild(statusDivNode);
 	}
+});
 
+ipcRendererStatus.on('clearDirectories', function (event, data) {
+	var homeDivNode = document.getElementById('home');
+	document.getElementById("welcome").style.display = "";
+	var childArray = Array.prototype.slice.call(homeDivNode.childNodes);
+	var count = childArray.length;
+	for (var i = 0; i < count; i++) {
+		if (childArray[i].id !== 'welcome') {
+			homeDivNode.removeChild(childArray[i]);
+		}
+	}
 });

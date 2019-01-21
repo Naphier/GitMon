@@ -119,12 +119,56 @@ ipcMain.on('pickDirectory', function (event, data){
 	if (!dir || dir.length < 1)
 		return;
 
-	scanDirectory(dir[0]);
+	// we already have this one!
+	if (resultsCache[dir[0]]) {
+		dialog.showMessageBox(null, {
+			buttons: ['OK'],
+			title: 'Nope',
+			type: 'warning',
+			message: dir[0] + ' is already monitored. Can\'t add twice!'
+		});
+		return;
+	}
+
+	scanGitDirectory(dir[0], (result) => {
+		dialog.showMessageBox(null, {
+			buttons: ['OK'],
+			title: 'Success',
+			type: 'info',
+			message: 'Added ' + result.proj
+		});
+	});
 });
 
+const fsys = require('fs');
+const path = require('path');
 // TODO - handle scan directory call
-ipcMain.on('scanDirectory', function (event, data){
-	console.log('scanDirectory');
+ipcMain.on('scanDirectory', function (event, data) {
+	var dir = dialog.showOpenDialog({ properties: ['openDirectory'] });
+	if (!dir || dir.length < 1)
+		return;
+	var validDirs = [];
+	fsys.readdirSync(dir[0]).forEach(directory => {
+		if (!directory)
+			return;
+
+		var subDir = path.join(dir[0], directory);
+		fsys.readdirSync(subDir).forEach(subDirectory => {
+			if (!subDirectory)
+				return;
+
+			if (subDirectory === '.git') {
+				validDirs.push(subDir);
+				return;
+			}
+		});
+	});
+
+	//console.log("Valid Directories: ".concat(validDirs.length));
+	for (var k = 0; k < validDirs.length; k++) {
+		//console.log(validDirs[k]);
+		scanGitDirectory(validDirs[k]);
+	}
 });
 
 // TODO - handle remove project call
@@ -142,8 +186,14 @@ ipcMain.on('setNewInterval', function (event, data) {
 
 });
 
+ipcMain.on('removeAllDirectories', function (event, data) {
+	resultsCache = {};
+	store.set('resultsCache', resultsCache);
+	win.webContents.send('clearDirectories');
+});
 
-function scanDirectory(directory) {
+
+function scanGitDirectory(directory, onSuccess) {
 	runGitFetch(
 		directory,
 		(successDir) => {
@@ -155,6 +205,8 @@ function scanDirectory(directory) {
 					win.webContents.send('setGitStatus', json);
 					resultsCache[successDir] = result;
 					store.set('resultsCache', resultsCache);
+					if (onSuccess)
+						onSuccess(result);
 				},
 				(err) => {
 					dialog.showErrorBox('No bueno!', err.message);
@@ -174,9 +226,9 @@ function mainLoop() {
 }
 
 function updateBadge() {
-	if (results && results.length > 0) {
-		for (result in results) {
-			if (result.outOfDate) {
+	if (resultsCache && resultsCache.length > 0) {
+		for (var key in resultsCache) {
+			if (resultsCache[key] && resultsCache[key].outOfDate) {
 				win.webContents.send('setBadge', true);
 				return;
 			}

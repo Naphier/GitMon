@@ -7,3 +7,7 @@ function pickDirectory() {
 function scanDirectory() {
 	ipcDirectoryPicker.send('scanDirectory');
 }
+
+function removeAllDirectories() {
+	ipcDirectoryPicker.send('removeAllDirectories');
+}
