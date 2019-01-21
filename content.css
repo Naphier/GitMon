@@ -1,0 +1,50 @@
+#main {
+	width: 88%;
+}
+
+#main div{
+	padding: 5px 0px 5px 0px;
+}
+
+
+#main .status {
+	overflow: hidden;
+	white-space: nowrap;
+	border-radius: 5px;
+	display: block;
+	padding: 5px;
+}
+
+#addButton {
+	position: absolute;
+	bottom: 0px;
+	right: 10px;
+	font-size: 50px;
+}
+
+.projectName {
+	cursor: pointer;	
+}
+
+
+.status span {
+	padding: 0px 5px 0px 5px;
+}
+
+
+.trashButton, .editButton {
+	position: absolute;
+	right: 5px;
+}
+
+.editButton {
+	right: 35px;
+}
+
+.pageButton {
+	border: none;
+	outline: none;
+	border-radius: 5px;
+	padding: 10px;
+	margin: 10px;
+}

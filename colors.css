@@ -1,0 +1,112 @@
+*{
+	font-family:Roboto;
+}
+
+a, a:visited {
+	color: #D1D1D1;
+}
+
+a:hover {
+	color: #F1F1F1;
+}
+
+body {
+	background-color: black;
+	color: #D1D1D1;
+}
+
+.bar1, .bar2, .bar3 {
+	background-color: #818181;
+}
+
+.sidenav {
+	background-color: #000000;
+}
+
+.sidenavOpen {
+	background-color: #1A1A1A;
+}
+
+.sidenav a {
+	text-decoration: none;
+	color: #818181;
+}
+
+.sidenav a:hover {
+	color: #f1f1f1;
+}
+
+#title-bar {
+	background-color: #1A1A1A;
+}
+
+#title-bar-btns button {
+	background-color: transparent;
+	color: #818181;
+}
+
+#title-bar-btns button:hover {
+	background-color: #818181;
+	color: #F1F1F1;
+}
+
+#addButton {
+	color: #818181;
+}
+
+#addButton:hover {
+	color: #F1F1F1;
+}
+
+#main .status {
+	background-color: #1A1A1A;
+}
+
+.ahead {
+	color: rgb(0, 255, 0);
+}
+
+.behind {
+	color: red;
+}
+
+.alertIcon {
+	color: yellow;
+}
+
+.projectName {
+	color: #818181;
+}
+
+.projectName:hover {
+	color: #F1F1F1;
+}
+
+
+.stage {
+	color: red;
+}
+
+.untracked {
+	color: yellow;
+}
+
+.trashButton, .editButton {
+	color: #818181;
+	background-color: #1A1A1A;
+}
+
+.trashButton:hover, .editButton:hover {
+	color: rgb(194, 71, 71);
+}
+
+.pageButton {
+	transition: 0.25s ease;
+	color: #818181;
+	background-color: #1A1A1A;
+}
+
+.pageButton:hover {
+	color: #F1F1F1;
+	background-color: #818181;
+}

@@ -1,0 +1,28 @@
+
+#title-bar {
+    -webkit-app-region: drag;
+    height: 24px;
+    padding: none;
+    margin: 0px;
+}
+
+#title {
+    position: fixed;
+    top: 3px;
+    left: 6px;
+}
+
+#title-bar-btns {
+    -webkit-app-region: no-drag;
+    position: fixed;
+    top: 1px;
+    right: 0px;
+}
+
+#title-bar-btns button {
+    height: 24px;
+    width: 24px;
+    border: none;    
+    font-size: 16px;
+    outline: none;
+}

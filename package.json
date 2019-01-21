@@ -1,0 +1,19 @@
+{
+	"name": "git-mon",
+	"version": "0.0.0",
+	"description": "A simple GIT repository monitor widget to let you see you've not committed something!",
+	"main": "main.js",
+	"author": "Naphier",
+	"scripts": {
+		"start": "electron .",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"license": "ISC",
+	"devDependencies": {
+		"electron": "^4.0.1"
+	},
+	"dependencies": {
+		"child_process": "^1.0.2"
+	}
+}
