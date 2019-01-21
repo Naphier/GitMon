@@ -5,3 +5,5 @@ I'm using VS for this project. There you'll find a few TODOs in the Task List wi
 If you're thinking about changing the layout then please consult me first. I'm open to ideas, but the layout was a pain.
 
 You'll need Electron via npm to run the project.
+
+Please do all work in the development branch.
