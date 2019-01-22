@@ -1,7 +1,4 @@
-var ipcRendererStatus = require('electron').ipcRenderer;
-//const { shell } = require('electron');
-
-ipcRendererStatus.on('setGitStatus', function (event, gitStatusResult) {
+ipcRenderer.on('setGitStatus', function (event, gitStatusResult) {
 	var template = document.getElementById('testProj');
 	if (template) {
 		template.parentNode.removeChild(template);
@@ -31,7 +28,7 @@ ipcRendererStatus.on('setGitStatus', function (event, gitStatusResult) {
 		projNameNode.classList.add('projectName');
 		projNameNode.innerHTML = status.proj;
 		projNameNode.addEventListener('click', function () {
-			console.log('clicked project name');
+			//console.log('clicked project name');
 			shell.showItemInFolder(status.dir);
 		});
 		statusDivNode.appendChild(projNameNode);
@@ -94,7 +91,7 @@ ipcRendererStatus.on('setGitStatus', function (event, gitStatusResult) {
 	}
 });
 
-ipcRendererStatus.on('clearDirectories', function (event, data) {
+ipcRenderer.on('clearDirectories', function (event, data) {
 	var homeDivNode = document.getElementById('home');
 	document.getElementById("welcome").style.display = "";
 	var childArray = Array.prototype.slice.call(homeDivNode.childNodes);

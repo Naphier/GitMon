@@ -1,13 +1,11 @@
-let ipcDirectoryPicker = require('electron').ipcRenderer;
-
 function pickDirectory() {
-	ipcDirectoryPicker.send('pickDirectory');
+	ipcRenderer.send('pickDirectory');
 }
 
 function scanDirectory() {
-	ipcDirectoryPicker.send('scanDirectory');
+	ipcRenderer.send('scanDirectory');
 }
 
 function removeAllDirectories() {
-	ipcDirectoryPicker.send('removeAllDirectories');
+	ipcRenderer.send('removeAllDirectories');
 }

@@ -1,7 +1,5 @@
 try {
 	(function () {
-		const remote = require('electron').remote;
-
 		function init() {
 			document.getElementById("min-btn").addEventListener("click", function (e) {
 				const window = remote.getCurrentWindow();
@@ -29,6 +27,4 @@ try {
 			}
 		};
 	})();
-} catch (e) {
-
-}
+} catch (e) { }

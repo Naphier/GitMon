@@ -44,7 +44,7 @@ function onReady() {
 		frame: false,
 		minWidth: 180,
 		minHeight: 260,
-		icon: './icon.png',
+		icon: './media/icon.png',
 		webPreferences: { nodeIntegration: true }
 	});
 
