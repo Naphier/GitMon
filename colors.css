@@ -2,6 +2,18 @@
 	font-family:Roboto;
 }
 
+::-webkit-scrollbar-track {
+	background-color: #0c0c0c;
+}
+
+::-webkit-scrollbar {
+	background-color: black;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: #555;
+}
+
 a, a:visited {
 	color: #D1D1D1;
 }

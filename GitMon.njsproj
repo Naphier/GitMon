@@ -65,6 +65,7 @@
     </Content>
     <Content Include="icon.png" />
     <Content Include="license.md" />
+    <Content Include="scrollbar.css" />
     <Content Include="sidenav.css">
       <SubType>Code</SubType>
     </Content>
