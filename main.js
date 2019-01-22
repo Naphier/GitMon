@@ -192,6 +192,10 @@ ipcMain.on('removeAllDirectories', function (event, data) {
 	win.webContents.send('clearDirectories');
 });
 
+ipcMain.on('getSettingsFile', function (event, data) {
+	win.webContents.send('settingsFilePathRetrieved', store.path);
+});
+
 
 function scanGitDirectory(directory, onSuccess) {
 	runGitFetch(

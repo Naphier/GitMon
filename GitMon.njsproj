@@ -39,6 +39,7 @@
     <Compile Include="renderer\externalLinkHandler.js" />
     <Compile Include="renderer\gitStatusResultDOMHandler.js" />
     <Compile Include="renderer\mainDivSizeHandler.js" />
+    <Compile Include="renderer\preloader.js" />
     <Compile Include="renderer\sidenav.js" />
     <Compile Include="renderer\titlebar.js" />
     <Compile Include="renderer\zoomHandler.js" />
@@ -48,6 +49,7 @@
     </Compile>
     <Content Include="css\colors.css" />
     <Content Include="css\content.css" />
+    <Content Include="css\preloader.css" />
     <Content Include="css\scrollbar.css" />
     <Content Include="css\sidenav.css" />
     <Content Include="css\titlebar.css" />

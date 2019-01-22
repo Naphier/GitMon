@@ -23,7 +23,7 @@ function toggleNav(caller) {
 
 function show(elementId) {
 	var element = document.getElementById("main");
-	console.log('show: '.concat(elementId));
+	//console.log('show: '.concat(elementId));
 	for (var child = element.firstChild; child !== null; child = child.nextSibling) {
 		//console.log(child);
 		//console.log(child.id);
