@@ -91,9 +91,10 @@ ipcRenderer.on('setGitStatus', function (event, gitStatusResult) {
 	}
 });
 
-ipcRenderer.on('clearDirectories', function (event, data) {
+ipcRenderer.on('clearDirectories', function (event, showWelcome) {
 	var homeDivNode = document.getElementById('home');
-	document.getElementById("welcome").style.display = "";
+	if (showWelcome)
+		document.getElementById("welcome").style.display = "";
 	var childArray = Array.prototype.slice.call(homeDivNode.childNodes);
 	var count = childArray.length;
 	for (var i = 0; i < count; i++) {

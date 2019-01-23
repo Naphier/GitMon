@@ -2,6 +2,10 @@ const { app, BrowserWindow, dialog, globalShortcut } = require('electron');
 const ipcMain = require('electron').ipcMain;
 const Store = require('./store.js');
 const ChildProcess = require('child_process');
+const electronLocalShortCut = require('electron-localshortcut');
+const fs = require('fs');
+const path = require('path');
+
 let win;
 
 let resultsCache = new Object();
@@ -77,6 +81,10 @@ function onReady() {
 		store.set('zoomAdjustment', 0);
 	});
 
+	electronLocalShortCut.register(win, 'F5', () => {
+		mainLoop();
+	});
+
 	win.webContents.once('dom-ready', () => {
 		var zoomAdjustment = store.get('zoomAdjustment');
 		win.webContents.send('zoom', zoomAdjustment);
@@ -90,8 +98,10 @@ function onReady() {
 				win.webContents.send('setGitStatus', JSON.stringify(resultsCache[key]));
 			}
 		}
-
-		let mainLoopInterval = setInterval(mainLoop, store.get('interval'));
+		var interval = store.get('interval');
+		//console.log('interval: '.concat(interval));
+		mainLoop();
+		let mainLoopInterval = setInterval(mainLoop, interval);
 	});
 }
 
@@ -140,20 +150,18 @@ ipcMain.on('pickDirectory', function (event, data){
 	});
 });
 
-const fsys = require('fs');
-const path = require('path');
-// TODO - handle scan directory call
+
 ipcMain.on('scanDirectory', function (event, data) {
 	var dir = dialog.showOpenDialog({ properties: ['openDirectory'] });
 	if (!dir || dir.length < 1)
 		return;
 	var validDirs = [];
-	fsys.readdirSync(dir[0]).forEach(directory => {
+	fs.readdirSync(dir[0]).forEach(directory => {
 		if (!directory)
 			return;
 
 		var subDir = path.join(dir[0], directory);
-		fsys.readdirSync(subDir).forEach(subDirectory => {
+		fs.readdirSync(subDir).forEach(subDirectory => {
 			if (!subDirectory)
 				return;
 
@@ -189,13 +197,28 @@ ipcMain.on('setNewInterval', function (event, data) {
 ipcMain.on('removeAllDirectories', function (event, data) {
 	resultsCache = {};
 	store.set('resultsCache', resultsCache);
-	win.webContents.send('clearDirectories');
+	win.webContents.send('clearDirectories', true);
 });
 
 ipcMain.on('getSettingsFile', function (event, data) {
 	win.webContents.send('settingsFilePathRetrieved', store.path);
 });
 
+
+function refreshStatusListUi() {
+	win.webContents.send('clearDirectories', false);
+
+	sortResultsCache();
+	store.set('resultsCache', resultsCache);
+
+
+	for (var key in resultsCache) {
+		win.webContents.send(
+			'setGitStatus',
+			JSON.stringify(resultsCache[key])
+		);
+	}
+}
 
 function scanGitDirectory(directory, onSuccess) {
 	runGitFetch(
@@ -206,9 +229,12 @@ function scanGitDirectory(directory, onSuccess) {
 				(result) => {
 					var json = JSON.stringify(result);
 					console.log('runGitStatusResult: ' + json);
-					win.webContents.send('setGitStatus', json);
+
 					resultsCache[successDir] = result;
-					store.set('resultsCache', resultsCache);
+
+					refreshStatusListUi();					
+					updateBadge();
+
 					if (onSuccess)
 						onSuccess(result);
 				},
@@ -223,9 +249,48 @@ function scanGitDirectory(directory, onSuccess) {
 	);
 }
 
+function sortResultsCache() {
+	if (resultsCache) {
+		var byName = Object.keys(resultsCache).map(function (key) {
+			return [key, resultsCache[key]];
+		});
+		byName.sort(function (a, b) {
+			var x = a[1].proj.toLowerCase();
+			var y = b[1].proj.toLowerCase();
+			return (x < y) ? -1 : ((x > y) ? 1 : 0);
+		});
+		//console.log('byName: ');
+		//console.log(byName);
+		/*
+		for (var key in byName) {
+			console.log(byName[key].proj);
+		}
+		*/
+		resultsCache = {};
+		for (var i = 0; i < byName.length; i++) {
+			if (byName[i][1].outOfDate) {
+				resultsCache[byName[i][0]] = byName[i][1];
+			}
+		}
+
+		for (var j = 0; j < byName.length; j++) {
+			if (!byName[j][1].outOfDate) {
+				resultsCache[byName[j][0]] = byName[j][1];
+			}
+		}
+
+		for (var key in resultsCache) {
+			console.log(resultsCache[key].proj + '  '.concat(resultsCache[key].outOfDate));
+		}
+
+	}
+}
+
 // TODO schedule runs
 function mainLoop() {
-
+	console.log('mainLoop');
+	// if we loop through and do fetches then refresh is not needed
+	refreshStatusListUi();
 	updateBadge();
 }
 
