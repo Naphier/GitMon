@@ -1,8 +1,9 @@
 ipcRenderer.on('setBadge', function (event, on) {
+	//console.log('setBadge: '.concat(on));
 	var image = null;
 	if (on) {
-		var nativeImage = remoteR.nativeImage;
+		var nativeImage = remote.nativeImage;
 		image = nativeImage.createFromPath('./media/icon-overlay.png');
 	}
-	remoteR.getCurrentWindow().setOverlayIcon(image, '');
+	remote.getCurrentWindow().setOverlayIcon(image, '');
 });

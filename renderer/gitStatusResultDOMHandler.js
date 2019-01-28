@@ -9,8 +9,7 @@ ipcRenderer.on('setGitStatus', function (event, gitStatusResult) {
 	var status = JSON.parse(gitStatusResult);
 	var statusDivNode = document.getElementById(status.proj);
 	if (statusDivNode) {
-		//TODO update element
-		console.log('update element');
+		document.removeChild(statusDivNode);
 	} else {
 		// create element and insert into dom
 		statusDivNode = document.createElement('span');
@@ -68,24 +67,25 @@ ipcRenderer.on('setGitStatus', function (event, gitStatusResult) {
 			statusDivNode.appendChild(untrackedNode);
 		}
 
-		// delete and modify buttons
+		// delete button
 		var trashNode = document.createElement('span');
 		trashNode.classList.add('trashButton');
 		trashNode.innerHTML = '<i class="far fa-trash-alt"></i>';
 		trashNode.addEventListener('click', function () {
-			// TODO remove project handler
-			console.log('trash clicked for: ' + status.proj);
+			ipcRenderer.send('removeProject', status);
+			//console.log('trash clicked for: ' + status.proj);
 		});
 		statusDivNode.appendChild(trashNode);
 
+		/*
 		var editNode = document.createElement('span');
 		editNode.classList.add('editButton');
 		editNode.innerHTML = '<i class="far fa-edit"></i>';
 		editNode.addEventListener('click', function () {
-			// TODO edit project handler
 			console.log('edit clicked for: ' + status.proj);
 		});
 		statusDivNode.appendChild(editNode);
+		*/
 
 		document.getElementById('home').appendChild(statusDivNode);
 	}

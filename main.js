@@ -106,7 +106,7 @@ function onReady() {
 }
 
 ipcMain.on('zoomSet', function (event, newZoom) {
-	console.log('newZoom: '.concat(newZoom));
+	//console.log('newZoom: '.concat(newZoom));
 	store.set('zoomAdjustment', newZoom - 1);
 });
 
@@ -179,14 +179,22 @@ ipcMain.on('scanDirectory', function (event, data) {
 	}
 });
 
-// TODO - handle remove project call
-ipcMain.on('removeProject', function (event, data) {
-	
-});
-
-// TODO - handle edit directory call
-ipcMain.on('editDirectory', function (event, data) {
-
+ipcMain.on('removeProject', function (event, status) {
+	dialog.showMessageBox(
+		null,
+		{
+			buttons: ['Yes', 'No'],
+			title: 'Confirm Removal',
+			type: 'info',
+			message: 'Are you sure you want to remove ' + status.proj + '?'
+		},
+		function (response, checkBoxChecked) {
+			if (response === 0) {
+				delete resultsCache[status.dir];
+				refreshStatusListUi();	
+				updateBadge();
+			}
+		});
 });
 
 // TODO - handle set new interval call
@@ -213,6 +221,9 @@ function refreshStatusListUi() {
 
 
 	for (var key in resultsCache) {
+		if (!key || !resultsCache[key])
+			continue;
+
 		win.webContents.send(
 			'setGitStatus',
 			JSON.stringify(resultsCache[key])
@@ -279,32 +290,34 @@ function sortResultsCache() {
 			}
 		}
 
+		/*
 		for (var key in resultsCache) {
 			console.log(resultsCache[key].proj + '  '.concat(resultsCache[key].outOfDate));
 		}
-
+		*/
 	}
 }
 
 // TODO schedule runs
 function mainLoop() {
-	console.log('mainLoop');
+	//console.log('mainLoop');
 	// if we loop through and do fetches then refresh is not needed
 	refreshStatusListUi();
 	updateBadge();
 }
 
 function updateBadge() {
-	if (resultsCache && resultsCache.length > 0) {
+	if (resultsCache) {
 		for (var key in resultsCache) {
 			if (resultsCache[key] && resultsCache[key].outOfDate) {
 				win.webContents.send('setBadge', true);
+				console.log('should set badge');
 				return;
 			}
 		}
-
-		win.webContents.send('setBadge', false);
 	}
+	//console.log('should unset badge');
+	win.webContents.send('setBadge', false);
 }
 
 // TODO: handle --show-stash
@@ -321,7 +334,7 @@ function runGitFetch(dir, onSuccess, onError) {
 				} else {
 					onError(new GitError(
 						GitErrType.Unknown,
-						'Unkown error at directory: \''.concat(dir).concat('\'')));
+						'Unknown error at directory: \''.concat(dir).concat('\'')));
 				}
 
 				console.error('runGitFetch child-process err: \r\n'.concat(err));

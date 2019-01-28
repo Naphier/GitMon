@@ -5,10 +5,13 @@
     <Name>GitMon</Name>
     <RootNamespace>GitMon</RootNamespace>
     <SaveNodeJsSettingsInProjectFile>True</SaveNodeJsSettingsInProjectFile>
-    <NodeExePath>C:\Program Files\nodejs\node.exe</NodeExePath>
-    <NodeExeArguments>
-    </NodeExeArguments>
+    <NodeExePath>D:\@Documents\My Open Source Repos\GitMon\node_modules\electron\dist\electron.exe</NodeExePath>
+    <NodeExeArguments>main.js</NodeExeArguments>
     <JavaScriptTestFramework>ExportRunner</JavaScriptTestFramework>
+    <ScriptArguments>--inspect-brk</ScriptArguments>
+    <DebuggerPort>5858</DebuggerPort>
+    <NodejsPort>
+    </NodejsPort>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -24,7 +27,7 @@
     <OutputPath>.</OutputPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
-    <StartWebBrowser>False</StartWebBrowser>
+    <StartWebBrowser>True</StartWebBrowser>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
