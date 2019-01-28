@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, globalShortcut } = require('electron');
+const { app, BrowserWindow, dialog, globalShortcut, Tray, Menu, nativeImage } = require('electron');
 const ipcMain = require('electron').ipcMain;
 const Store = require('./store.js');
 const ChildProcess = require('child_process');
@@ -7,7 +7,8 @@ const fs = require('fs');
 const path = require('path');
 
 let win;
-
+let appTrayIcon = null;
+let appIconImg;
 let resultsCache = new Object();
 
 const store = new Store({
@@ -15,7 +16,9 @@ const store = new Store({
 	defaults: {
 		windowBounds: { width: 800, height: 600 }, 
 		zoomAdjustment: 0,
-		interval: 300000 // 5 minutes
+		interval: 300000, // 5 minutes
+		didShowMinToTrayWarning: false,
+		alwaysMinimizeToTray: false
 	}
 });
 
@@ -39,16 +42,15 @@ function strFormat(str, obj) {
 }
 
 function onReady() {
-	//const appIcon = new Tray('./overlay-icon.png');
 	let { width, height } = store.get('windowBounds');
-
+	appIconImg = nativeImage.createFromPath('./media/icon.png');
 	win = new BrowserWindow({
 		width: width,
 		height: height,
 		frame: false,
 		minWidth: 180,
 		minHeight: 260,
-		icon: './media/icon.png',
+		icon: appIconImg, //'./media/icon.png',
 		webPreferences: { nodeIntegration: true }
 	});
 
@@ -103,6 +105,85 @@ function onReady() {
 		mainLoop();
 		let mainLoopInterval = setInterval(mainLoop, interval);
 	});
+
+	
+
+	win.on('minimize', function (event) {
+		event.preventDefault();
+		
+
+		if (!store.get('didShowMinToTrayWarning')) {
+			store.set('didShowMinToTrayWarning', true);
+			dialog.showMessageBox(
+				null,
+				{
+					buttons: ['Yes', 'No'],
+					title: 'Where\'s my window?',
+					type: 'warning',
+					message: 'Always minimize to tray? Can be changed later in settings.', 	
+				},
+				function (response, checked) {
+					if (response === 0) {
+						store.set('alwaysMinimizeToTray', true);
+						win.hide();
+					}
+				}
+			);
+		}
+		else {
+			if (store.get('alwaysMinimizeToTray'))
+				win.hide();
+		}
+	});
+
+	win.on('show', function () {
+		console.log('win.on show');
+		if (store.get('alwaysMinimizeToTray'))
+			setTrayIcon(false);		
+	});
+
+	win.on('hide', function () {
+		if (store.get('alwaysMinimizeToTray'))
+			setTrayIcon(true);
+	});
+}
+
+function setTrayIcon(on) {
+	if (on) {
+
+		appTrayIcon = new Tray('./media/icon.png');
+		var contextMenu = Menu.buildFromTemplate([
+			{
+				label: 'Show', click: function () {
+					win.show();
+				}
+			},
+			{
+				label: 'Quit', click: function () {
+					app.isQuitting = true;
+					app.quit();
+				}
+			}
+		]);
+
+		appTrayIcon.on('double-click', function () {
+			win.show();
+		});
+
+		appTrayIcon.setContextMenu(contextMenu);
+		updateBadge();
+	} else {
+		appTrayIcon.setHighlightMode('always');
+		appTrayIcon.destroy();
+
+		if (!appIconImg) {
+			appIconImg = nativeImage.createFromPath('./media/icon.png');
+		}
+
+		console.log('should set appIconImg: '.concat(appIconImg));
+		win.setIcon(appIconImg);
+		updateBadge();
+	}
 }
 
 ipcMain.on('zoomSet', function (event, newZoom) {
@@ -197,10 +278,18 @@ ipcMain.on('removeProject', function (event, status) {
 		});
 });
 
+
+
+
 // TODO - handle set new interval call
 ipcMain.on('setNewInterval', function (event, data) {
 
 });
+
+// TODO - handle toggle minimize to tray
+ipcMain.on('setAlwaysMinimizeToTray', function (event, data) {
+	store.set('alwaysMinimizeToTray', data);
+})
 
 ipcMain.on('removeAllDirectories', function (event, data) {
 	resultsCache = {};
@@ -308,16 +397,32 @@ function mainLoop() {
 
 function updateBadge() {
 	if (resultsCache) {
+		var outOfDateCount = 0;
+
 		for (var key in resultsCache) {
 			if (resultsCache[key] && resultsCache[key].outOfDate) {
-				win.webContents.send('setBadge', true);
-				console.log('should set badge');
-				return;
+				outOfDateCount++;
+			}	
+		}
+
+		if (outOfDateCount > 0) {
+			win.webContents.send('setBadge', true);
+
+			if (appTrayIcon) {
+				appTrayIcon.setImage('./media/tray-icon-overlay.png');
+				appTrayIcon.setToolTip('Repos out of date: '.concat(outOfDateCount));
 			}
+			console.log('should set badge');
+			return;
 		}
 	}
 	//console.log('should unset badge');
 	win.webContents.send('setBadge', false);
+	if (appTrayIcon) {
+		appTrayIcon.setImage('./media/icon.png');
+		appTrayIcon.setToolTip('All up to date :)');
+	}
+
 }
 
 // TODO: handle --show-stash
