@@ -16,10 +16,11 @@ function openSettingsFile() {
 
 ipcRenderer.on('settingsFilePathRetrieved', function (event, data) {
 	if (data)
-		shell.showItemInFolder(data);
+		shell.openItem(data);
 });
 
 // TODO - open colors css file - how to open file in proj directory?
 function openColorsCss() {
-	shell.showItemInFolder('./css/colors.css');
+	//shell.showItemInFolder('./css/colors.css');
+	ipcRenderer.send('getCssFile');
 }

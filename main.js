@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, globalShortcut, Tray, Menu, nativeImage } = require('electron');
+const { remote, app, BrowserWindow, dialog, globalShortcut, Tray, Menu, nativeImage } = require('electron');
 const ipcMain = require('electron').ipcMain;
 const Store = require('./store.js');
 const ChildProcess = require('child_process');
@@ -10,6 +10,8 @@ let win;
 let appTrayIcon = null;
 let appIconImg;
 let resultsCache = new Object();
+let mainLoopInterval = null;
+let cssColorPathUser = null;
 
 const store = new Store({
 	configName: 'userprefs',
@@ -41,6 +43,21 @@ function strFormat(str, obj) {
 	});
 }
 
+
+app.on('ready', onReady);
+
+app.on('window-all-closed', () => {
+	if (process.platform !== 'darwin') {
+		app.quit();
+	}
+});
+
+app.on('activate', () => {
+	if (win === null) {
+		onReady();
+	}
+});
+
 function onReady() {
 	let { width, height } = store.get('windowBounds');
 	appIconImg = nativeImage.createFromPath('./media/icon.png');
@@ -54,12 +71,18 @@ function onReady() {
 		webPreferences: { nodeIntegration: true }
 	});
 
+	setupRpcs();
+	handleColorCssInsertion();
+	initHotKeys();
 
 	win.toggleDevTools();
+
 	// destroy dropdown menus
 	win.setMenu(null);
 
-	win.loadFile('index.html');
+	//win.loadFile('index.html');
+	// this works better with debugger
+	win.loadURL(`file:///${__dirname}/index.html`);
 
 	win.on('resize', () => {
 		let { width, height } = win.getBounds();
@@ -67,24 +90,10 @@ function onReady() {
 	});
 
 	win.on('closed', () => {
+		if (mainLoopInterval) {
+			clearInterval(mainLoopInterval);
+		}
 		win = null;
-	});
-
-	globalShortcut.register('CommandOrControl+=', () => {
-		win.webContents.send('zoom', 0.1);
-	});
-
-	globalShortcut.register('CommandOrControl+-', () => {
-		win.webContents.send('zoom', -0.1);
-	});
-
-	globalShortcut.register('CommandOrControl+0', () => {
-		win.webContents.send('resetZoom');
-		store.set('zoomAdjustment', 0);
-	});
-
-	electronLocalShortCut.register(win, 'F5', () => {
-		mainLoop();
 	});
 
 	win.webContents.once('dom-ready', () => {
@@ -103,10 +112,8 @@ function onReady() {
 		var interval = store.get('interval');
 		//console.log('interval: '.concat(interval));
 		mainLoop();
-		let mainLoopInterval = setInterval(mainLoop, interval);
+		//mainLoopInterval = setInterval(mainLoop, interval);
 	});
-
-	
 
 	win.on('minimize', function (event) {
 		event.preventDefault();
@@ -148,6 +155,82 @@ function onReady() {
 	});
 }
 
+function initHotKeys() {
+	globalShortcut.register('CommandOrControl+=', () => {
+		win.webContents.send('zoom', 0.1);
+	});
+
+	globalShortcut.register('CommandOrControl+-', () => {
+		win.webContents.send('zoom', -0.1);
+	});
+
+	globalShortcut.register('CommandOrControl+0', () => {
+		win.webContents.send('resetZoom');
+		store.set('zoomAdjustment', 0);
+	});
+
+	electronLocalShortCut.register(win, 'F5', () => {
+		handleColorCssInsertion();
+		mainLoop();
+	});
+}
+
+
+function handleColorCssInsertion() {
+	var userDataPath = (app || remote.app).getPath('userData');
+
+	var cssColorPathDefault = './css/colors.css';
+
+	cssColorPathUser = path.join(userDataPath, 'colors.css');
+	if (!fs.existsSync(cssColorPathUser)) {
+		if (!fs.existsSync(cssColorPathDefault)) {
+			console.log(
+				'ERROR! cannot find default css at: \''.concat(cssColorPathDefault).concat('\''));
+		} else {
+			fs.copyFileSync(cssColorPathDefault, cssColorPathUser);
+			console.log('Copying default css to: ' + cssColorPathUser);
+		}
+	}
+
+	if (!fs.existsSync(cssColorPathUser)) {
+		dialog.showErrorBox(
+			'CSS Load error!',
+			'Could not find user css file: ' + cssColorPathUser);
+	} else {
+		win.webContents.on('did-finish-load', function () {
+			fs.readFile(cssColorPathUser, (err, data) => {
+				if (err) {
+					fs.readFile(cssColorPathDefault, (errDef, dataDef) => {
+						if (errDef) {
+							dialog.showErrorBox(
+								'Whoa!',
+								'Something went way wrong. Could not load default CSS at: '
+								+ cssColorPathDefault);
+						} else {
+							console.log(
+								'importing DEFAULT color.css: ' + cssColorPathDefault);
+
+							var formatedData =
+								dataDef.toString().replace(/\s{2,10}/g, ' ').trim();
+
+							console.log(formatedData);
+							win.webContents.insertCSS(formatedData);
+						}
+					});
+					console.log('error loading user color.css: '.concat(err));
+				} else {
+					console.log('importing USER color.css: ' + cssColorPathUser);
+
+					var formatedData = data.toString().replace(/\s{2,10}/g, ' ').trim();
+					console.log(formatedData);
+					win.webContents.insertCSS(formatedData);
+				}
+			});
+		});
+	}
+}
+
+
 function setTrayIcon(on) {
 	if (on) {
 
@@ -186,123 +269,113 @@ function setTrayIcon(on) {
 	}
 }
 
-ipcMain.on('zoomSet', function (event, newZoom) {
-	//console.log('newZoom: '.concat(newZoom));
-	store.set('zoomAdjustment', newZoom - 1);
-});
 
-app.on('ready', onReady);
-
-app.on('window-all-closed', () => {
-	if (process.platform !== 'darwin') {
-		app.quit();
-	}
-});
-
-app.on('activate', () => {
-	if (win === null) {
-		onReady();
-	}
-});
-
-ipcMain.on('pickDirectory', function (event, data){
-	var dir = dialog.showOpenDialog({ properties: ['openDirectory'] });
-	if (!dir || dir.length < 1)
-		return;
-
-	// we already have this one!
-	if (resultsCache[dir[0]]) {
-		dialog.showMessageBox(null, {
-			buttons: ['OK'],
-			title: 'Nope',
-			type: 'warning',
-			message: dir[0] + ' is already monitored. Can\'t add twice!'
-		});
-		return;
-	}
-
-	scanGitDirectory(dir[0], (result) => {
-		dialog.showMessageBox(null, {
-			buttons: ['OK'],
-			title: 'Success',
-			type: 'info',
-			message: 'Added ' + result.proj
-		});
+function setupRpcs() {
+	ipcMain.on('zoomSet', function (event, newZoom) {
+		//console.log('newZoom: '.concat(newZoom));
+		store.set('zoomAdjustment', newZoom - 1);
 	});
-});
 
-
-ipcMain.on('scanDirectory', function (event, data) {
-	var dir = dialog.showOpenDialog({ properties: ['openDirectory'] });
-	if (!dir || dir.length < 1)
-		return;
-	var validDirs = [];
-	fs.readdirSync(dir[0]).forEach(directory => {
-		if (!directory)
+	ipcMain.on('pickDirectory', function (event, data) {
+		var dir = dialog.showOpenDialog({ properties: ['openDirectory'] });
+		if (!dir || dir.length < 1)
 			return;
 
-		var subDir = path.join(dir[0], directory);
-		fs.readdirSync(subDir).forEach(subDirectory => {
-			if (!subDirectory)
-				return;
+		// we already have this one!
+		if (resultsCache[dir[0]]) {
+			dialog.showMessageBox(null, {
+				buttons: ['OK'],
+				title: 'Nope',
+				type: 'warning',
+				message: dir[0] + ' is already monitored. Can\'t add twice!'
+			});
+			return;
+		}
 
-			if (subDirectory === '.git') {
-				validDirs.push(subDir);
-				return;
-			}
+		scanGitDirectory(dir[0], (result) => {
+			dialog.showMessageBox(null, {
+				buttons: ['OK'],
+				title: 'Success',
+				type: 'info',
+				message: 'Added ' + result.proj
+			});
 		});
 	});
 
-	//console.log("Valid Directories: ".concat(validDirs.length));
-	for (var k = 0; k < validDirs.length; k++) {
-		//console.log(validDirs[k]);
-		scanGitDirectory(validDirs[k]);
-	}
-});
+	ipcMain.on('scanDirectory', function (event, data) {
+		var dir = dialog.showOpenDialog({ properties: ['openDirectory'] });
+		if (!dir || dir.length < 1)
+			return;
+		var validDirs = [];
+		fs.readdirSync(dir[0]).forEach(directory => {
+			if (!directory)
+				return;
 
-ipcMain.on('removeProject', function (event, status) {
-	dialog.showMessageBox(
-		null,
-		{
-			buttons: ['Yes', 'No'],
-			title: 'Confirm Removal',
-			type: 'info',
-			message: 'Are you sure you want to remove ' + status.proj + '?'
-		},
-		function (response, checkBoxChecked) {
-			if (response === 0) {
-				delete resultsCache[status.dir];
-				refreshStatusListUi();	
-				updateBadge();
-			}
+			var subDir = path.join(dir[0], directory);
+			fs.readdirSync(subDir).forEach(subDirectory => {
+				if (!subDirectory)
+					return;
+
+				if (subDirectory === '.git') {
+					validDirs.push(subDir);
+					return;
+				}
+			});
 		});
-});
 
+		//console.log("Valid Directories: ".concat(validDirs.length));
+		for (var k = 0; k < validDirs.length; k++) {
+			//console.log(validDirs[k]);
+			scanGitDirectory(validDirs[k]);
+		}
+	});
 
+	ipcMain.on('removeProject', function (event, status) {
+		dialog.showMessageBox(
+			null,
+			{
+				buttons: ['Yes', 'No'],
+				title: 'Confirm Removal',
+				type: 'info',
+				message: 'Are you sure you want to remove ' + status.proj + '?'
+			},
+			function (response, checkBoxChecked) {
+				if (response === 0) {
+					delete resultsCache[status.dir];
+					refreshStatusListUi();
+					updateBadge();
+				}
+			});
+	});
 
+	// TODO - handle set new interval call
+	ipcMain.on('setNewInterval', function (event, data) {
 
-// TODO - handle set new interval call
-ipcMain.on('setNewInterval', function (event, data) {
+	});
+	
+	ipcMain.on('setAlwaysMinimizeToTray', function (event, data) {
+		store.set('alwaysMinimizeToTray', data);
+	});
 
-});
+	ipcMain.on('removeAllDirectories', function (event, data) {
+		resultsCache = {};
+		store.set('resultsCache', resultsCache);
+		win.webContents.send('clearDirectories', true);
+	});
 
-// TODO - handle toggle minimize to tray
-ipcMain.on('setAlwaysMinimizeToTray', function (event, data) {
-	store.set('alwaysMinimizeToTray', data);
-})
+	ipcMain.on('getSettingsFile', function (event, data) {
+		win.webContents.send('settingsFilePathRetrieved', store.path);
+	});
 
-ipcMain.on('removeAllDirectories', function (event, data) {
-	resultsCache = {};
-	store.set('resultsCache', resultsCache);
-	win.webContents.send('clearDirectories', true);
-});
-
-ipcMain.on('getSettingsFile', function (event, data) {
-	win.webContents.send('settingsFilePathRetrieved', store.path);
-});
-
+	ipcMain.on('getCssFile', function (e, d) {
+		win.webContents.send('settingsFilePathRetrieved', cssColorPathUser);
+	});
+}
 
 function refreshStatusListUi() {
+	if (!win || !win.webContents)
+		return;
+
 	win.webContents.send('clearDirectories', false);
 
 	sortResultsCache();
@@ -312,6 +385,9 @@ function refreshStatusListUi() {
 	for (var key in resultsCache) {
 		if (!key || !resultsCache[key])
 			continue;
+
+		if (!win || !win.webContents)
+			return;
 
 		win.webContents.send(
 			'setGitStatus',
@@ -389,9 +465,20 @@ function sortResultsCache() {
 
 // TODO schedule runs
 function mainLoop() {
-	//console.log('mainLoop');
+	console.log('mainLoop');
 	// if we loop through and do fetches then refresh is not needed
-	refreshStatusListUi();
+	// refreshStatusListUi();
+
+	for (key in resultsCache) {
+		try {
+			var dir = key;
+			console.log('Scanning: ' + dir);
+			scanGitDirectory(dir);
+		} catch (err) { 
+			//who cares
+		}
+	}
+
 	updateBadge();
 }
 
@@ -443,10 +530,11 @@ function runGitFetch(dir, onSuccess, onError) {
 				}
 
 				console.error('runGitFetch child-process err: \r\n'.concat(err));
-				console.error('runGitFetch stdErr:\r\n'.concat(stdErr));
+				console.error('runGitFetch \''.concat(dir).concat('\' stdErr:\r\n').concat(stdErr));
 				return;
 			}
-			console.log('runGitFetch stdOut:\r\n'.concat(stdOut));
+
+			//console.log('runGitFetch: \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
 			
 			onSuccess(dir);
 		}
@@ -470,10 +558,11 @@ function runGitStatus(dir, onSuccess, onError) {
 				}
 
 				console.error('runGitStatus child-process err: \r\n'.concat(err));
-				console.error('runGitStatus stdErr:\r\n'.concat(stdErr));
+				console.error('runGitStatus \''.concat(dir).concat('\' stdErr:\r\n').concat(stdErr));
 				return;
 			}
-			console.log('runGitStatus stdOut:\r\n'.concat(stdOut));
+
+			console.log('runGitStatus \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
 			
 			var result = parseGitStatus(stdOut);
 
