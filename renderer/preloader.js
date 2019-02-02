@@ -33,3 +33,7 @@ setTimeout(function () { setPreloader(false); }, 3000);
 setTimeout(function () { setPreloader(true); }, 4000);
 setTimeout(function () { setPreloader(false); }, 8000);
 */
+
+ipcRenderer.on('showPreloader', function (event, on) {
+	setPreloader(on);
+});

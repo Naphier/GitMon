@@ -1,10 +1,11 @@
 const { remote, app, BrowserWindow, dialog, globalShortcut, Tray, Menu, nativeImage } = require('electron');
 const ipcMain = require('electron').ipcMain;
 const Store = require('./store.js');
-const ChildProcess = require('child_process');
 const electronLocalShortCut = require('electron-localshortcut');
 const fs = require('fs');
 const path = require('path');
+const GitHandler = require('./gitHandler.js');
+
 
 let win;
 let appTrayIcon = null;
@@ -12,6 +13,8 @@ let appIconImg;
 let resultsCache = new Object();
 let mainLoopInterval = null;
 let cssColorPathUser = null;
+let scanRequest = { done: false, id: 0, expected: 0, reported: 0, addedProjs: [], failedDirs: [] };
+
 
 const store = new Store({
 	configName: 'userprefs',
@@ -24,25 +27,7 @@ const store = new Store({
 	}
 });
 
-let GitErrType = {
-	None: 0,
-	NotAGitDir: 1,
-	Unknown: 3
-};
-
-class GitError {
-	constructor(gitErrType, message) {
-		this.gitErrType = gitErrType;
-		this.message = message;
-	}
-}
-
-function strFormat(str, obj) {
-	return str.replace(/\{\s*([^}\s]+)\s*\}/g, function (m, p1, offset, string) {
-		return obj[p1];
-	});
-}
-
+const gitHandler = new GitHandler();
 
 app.on('ready', onReady);
 
@@ -292,14 +277,21 @@ function setupRpcs() {
 			return;
 		}
 
-		scanGitDirectory(dir[0], (result) => {
-			dialog.showMessageBox(null, {
-				buttons: ['OK'],
-				title: 'Success',
-				type: 'info',
-				message: 'Added ' + result.proj
-			});
-		});
+		gitHandler.scanDirectory(
+			dir[0],
+			(result) => {
+				handleScanResult(result);
+				dialog.showMessageBox(null, {
+					buttons: ['OK'],
+					title: 'Success',
+					type: 'info',
+					message: 'Added ' + result.proj
+				});
+			},
+			(error) => {
+				dialog.showErrorBox('No bueno!', error);
+			}
+		);
 	});
 
 	ipcMain.on('scanDirectory', function (event, data) {
@@ -324,10 +316,38 @@ function setupRpcs() {
 		});
 
 		//console.log("Valid Directories: ".concat(validDirs.length));
+		scanRequest.done = false;
+		scanRequest.id++;
+		var currentRequestId = scanRequest.id;
+		scanRequest.expected = validDirs.length;
+		scanRequest.reported = 0;
+		scanRequest.addedProjs = [];
+		scanRequest.failedDirs = [];
+
+		if (validDirs.length > 0)
+			win.webContents.send('showPreloader', true);
+
+
 		for (var k = 0; k < validDirs.length; k++) {
 			//console.log(validDirs[k]);
-			scanGitDirectory(validDirs[k]);
-		}
+			gitHandler.scanDirectory(validDirs[k],
+				(result) => {
+					handleScanResult(result);
+
+					if (scanRequest.id === currentRequestId) {
+						scanRequest.addedProjs.push(result.proj);
+						scanRequest.reported++;
+						reportScanResultsHandler();
+					}
+				},
+				() => {
+					if (scanRequest.id === currentRequestId) {
+						scanRequest.failedDirs.push(validDirs[k]);
+						scanRequest.reported++;
+						reportScanResultsHandler();
+					}
+				});
+		}		
 	});
 
 	ipcMain.on('removeProject', function (event, status) {
@@ -361,6 +381,14 @@ function setupRpcs() {
 		resultsCache = {};
 		store.set('resultsCache', resultsCache);
 		win.webContents.send('clearDirectories', true);
+		dialog.showMessageBox(
+			null,
+			{
+				buttons: ['OK'],
+				type: 'info',
+				title: 'Removed all repos',
+				message: 'Removed all repos from monitor.'
+			});
 	});
 
 	ipcMain.on('getSettingsFile', function (event, data) {
@@ -372,9 +400,38 @@ function setupRpcs() {
 	});
 }
 
+function reportScanResultsHandler() {
+	if (scanRequest.done)
+		return;
+
+	if (scanRequest.expected !== scanRequest.reported)
+		return;
+
+	scanRequest.done = true;
+
+	var addedProjStr = scanRequest.addedProjs.join('\r\n');
+	var failedDirsStr = scanRequest.failedDirs.join('\r\n');
+
+	dialog.showMessageBox(null,
+		{
+			buttons: ['OK'],
+			title: 'Scan complete',
+			type: 'info',
+			message: 'Added '.concat(scanRequest.addedProjs.length) + ' projects: \r\n'
+				+ addedProjStr +
+				'\r\n\r\n'.concat(scanRequest.failedDirs.length) + ' Failed directories: \r\n' +
+				failedDirsStr
+		}
+	);
+
+	win.webContents.send('showPreloader', false);
+}
+
 function refreshStatusListUi() {
 	if (!win || !win.webContents)
 		return;
+
+	win.webContents.send('showPreloader', true);
 
 	win.webContents.send('clearDirectories', false);
 
@@ -394,35 +451,8 @@ function refreshStatusListUi() {
 			JSON.stringify(resultsCache[key])
 		);
 	}
-}
 
-function scanGitDirectory(directory, onSuccess) {
-	runGitFetch(
-		directory,
-		(successDir) => {
-			runGitStatus(
-				successDir,
-				(result) => {
-					var json = JSON.stringify(result);
-					console.log('runGitStatusResult: ' + json);
-
-					resultsCache[successDir] = result;
-
-					refreshStatusListUi();					
-					updateBadge();
-
-					if (onSuccess)
-						onSuccess(result);
-				},
-				(err) => {
-					dialog.showErrorBox('No bueno!', err.message);
-				}
-			);
-		},
-		(err) => {
-			dialog.showErrorBox('No bueno!', err.message);
-		}
-	);
+	win.webContents.send('showPreloader', false);
 }
 
 function sortResultsCache() {
@@ -473,12 +503,28 @@ function mainLoop() {
 		try {
 			var dir = key;
 			console.log('Scanning: ' + dir);
-			scanGitDirectory(dir);
+			gitHandler.scanDirectory(
+				dir,
+				handleScanResult,
+				(error) => {
+					dialog.showErrorBox('No bueno!', error);
+				}
+			);
 		} catch (err) { 
 			//who cares
 		}
 	}
 
+	updateBadge();
+}
+
+function handleScanResult(result) {
+	var json = JSON.stringify(result);
+	console.log('scanDirectory result: ' + json);
+
+	resultsCache[result.dir] = result;
+
+	refreshStatusListUi();
 	updateBadge();
 }
 
@@ -509,161 +555,4 @@ function updateBadge() {
 		appTrayIcon.setImage('./media/icon.png');
 		appTrayIcon.setToolTip('All up to date :)');
 	}
-
 }
-
-// TODO: handle --show-stash
-function runGitFetch(dir, onSuccess, onError) {
-	ChildProcess.exec(
-		'git fetch',
-		{ cwd: dir },
-		(err, stdOut, stdErr) => {
-			if (err) {
-				if (err.message.includes('Not a git repository')) {
-					onError(new GitError(
-						GitErrType.NotAGitDir,
-						'\''.concat(dir).concat('\' is not a git repo directory.')));
-				} else {
-					onError(new GitError(
-						GitErrType.Unknown,
-						'Unknown error at directory: \''.concat(dir).concat('\'')));
-				}
-
-				console.error('runGitFetch child-process err: \r\n'.concat(err));
-				console.error('runGitFetch \''.concat(dir).concat('\' stdErr:\r\n').concat(stdErr));
-				return;
-			}
-
-			//console.log('runGitFetch: \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
-			
-			onSuccess(dir);
-		}
-	);
-}
-
-function runGitStatus(dir, onSuccess, onError) {
-	ChildProcess.exec(
-		'git status --porcelain=v1 --branch --untracked=all',
-		{ cwd: dir },
-		(err, stdOut, stdErr) => {
-			if (err) {
-				if (err.message.includes('Not a git repository')) {
-					onError(new GitError(
-						GitErrType.NotAGitDir,
-						'\''.concat(dir).concat('\' is not a git repo directory.')));
-				} else {
-					onError(new GitError(
-						GitErrType.Unknown,
-						'Unkown error at directory: \''.concat(dir).concat('\'')));
-				}
-
-				console.error('runGitStatus child-process err: \r\n'.concat(err));
-				console.error('runGitStatus \''.concat(dir).concat('\' stdErr:\r\n').concat(stdErr));
-				return;
-			}
-
-			console.log('runGitStatus \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
-			
-			var result = parseGitStatus(stdOut);
-
-			// Try to parse out the directory
-			result.proj = dir.substr(dir.lastIndexOf('/') + 1);
-			if (result.proj === dir)
-				result.proj = dir.substr(dir.lastIndexOf('\\') + 1);
-
-			result.dir = dir;
-
-			onSuccess(result);
-	});
-}
-
-function parseGitStatus(output) {
-	var lines = output.match(/[^\r\n]+/g);
-	var working = '';
-	var remote = '';
-	var ahead = 0;
-	var behind = 0;
-	var staged = 0;
-	var unstaged = 0;
-	var untracked = 0;
-	var outOfDate = false;
-
-	lines.forEach((item, index) => {
-		//console.log(index + ': '.concat(item));
-		
-		if (item.startsWith('##')) {
-			var spaceSplit = item.split(' ');
-			if (spaceSplit.length < 2)
-				return;
-
-			var branchSplit = spaceSplit[1].split('...');
-
-			if (branchSplit.length !== 2)
-				return;
-
-			working = branchSplit[0];
-			remote = branchSplit[1];
-
-			var bracketSplit = item.split('[');
-			if (bracketSplit.length === 2) {
-				var aheadBehindStr = bracketSplit[1].replace(',', '').replace(']', '');
-				console.log('aheadBehind: '.concat(aheadBehindStr));
-				var aheadBehindSplit = aheadBehindStr.split(' ');
-
-				aheadBehindSplit.forEach((aItem, aIndex) => {
-
-					if (aItem.includes('ahead') && aheadBehindSplit.length >= aIndex + 1) {
-						var aheadIntTry = parseInt(aheadBehindSplit[aIndex + 1]);
-						if (!Number.isNaN(aheadIntTry)) {
-							ahead = aheadIntTry;
-						} else {
-							console.error(strFormat(
-								'Failed parsing \'ahead\'. aheadBehindStr: \'{0}\'  split length: {1}  aIndex: {2}',
-								[aheadBehindStr,
-								aheadBehindSplit.length,
-								aIndex]
-							));
-						}
-					}
-
-					if (aItem.includes('behind') && aheadBehindSplit.length >= aIndex + 1) {
-						var behindIntTry = parseInt(aheadBehindSplit[aIndex + 1]);
-						if (!Number.isNaN(behindIntTry)) {
-							behind = behindIntTry;
-						} else {
-							console.error(strFormat(
-								'Failed parsing \'behind\'. aheadBehindStr: \'{0}\'  split length: {1}  aIndex: {2}',
-								[aheadBehindStr,
-								aheadBehindSplit.length,
-								aIndex]
-							));
-						}
-					}
-				});
-			}
-		}
-
-		if (item.startsWith('M')) {
-			staged++;
-			return;
-		}
-
-		if (item.startsWith(' M')) {
-			unstaged++;
-			return;
-		}
-
-		if (item.startsWith('??')) {
-			untracked++;
-			return;
-		}
-	});
-	var err = null;
-
-	if (ahead > 0 || behind > 0 || staged > 0 || unstaged > 0 || untracked > 0 || err) {
-		outOfDate = true;
-	}
-
-	return { outOfDate, working, remote, ahead, behind, staged, unstaged, untracked, err};
-}
-
