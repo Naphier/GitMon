@@ -48,6 +48,9 @@
     <Compile Include="renderer\preloader.js" />
     <Compile Include="renderer\sidenav.js" />
     <Compile Include="renderer\titlebar.js" />
+    <Compile Include="renderer\versionDisplayer.js">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="renderer\zoomHandler.js" />
     <Compile Include="renderer\_requires.js" />
     <Compile Include="store.js">

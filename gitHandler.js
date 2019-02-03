@@ -71,7 +71,7 @@ class GitHandler {
 					return;
 				}
 
-				console.log('runStatus \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
+				//console.log('runStatus \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
 
 				var result = this.parseStatus(stdOut);
 

@@ -15,17 +15,25 @@ let mainLoopInterval = null;
 let cssColorPathUser = null;
 let scanRequest = { done: false, id: 0, expected: 0, reported: 0, addedProjs: [], failedDirs: [] };
 
+// turn off debugging for non-dev environments
+var debug = ['BIGDADDY', 'SOMEOTHERCOMPUTERNAME'].includes(process.env.COMPUTERNAME);
+if (!debug) {
+	console.log('console.log is disabled in non-dev environment');
+	console.log = function () { };
+}
 
-const store = new Store({
+const storeDefaults = {
 	configName: 'userprefs',
 	defaults: {
-		windowBounds: { width: 800, height: 600 }, 
+		windowBounds: { width: 800, height: 600 },
 		zoomAdjustment: 0,
 		interval: 300000, // 5 minutes
 		didShowMinToTrayWarning: false,
 		alwaysMinimizeToTray: false
 	}
-});
+};
+
+let store = new Store(storeDefaults);
 
 const gitHandler = new GitHandler();
 
@@ -60,7 +68,8 @@ function onReady() {
 	handleColorCssInsertion();
 	initHotKeys();
 
-	win.toggleDevTools();
+	if (debug)
+		win.toggleDevTools();
 
 	// destroy dropdown menus
 	win.setMenu(null);
@@ -81,7 +90,8 @@ function onReady() {
 		win = null;
 	});
 
-	win.webContents.once('dom-ready', () => {
+	win.webContents.on('dom-ready', () => {
+		//console.log('DOM READY');
 		var zoomAdjustment = store.get('zoomAdjustment');
 		win.webContents.send('zoom', zoomAdjustment);
 
@@ -94,16 +104,23 @@ function onReady() {
 				win.webContents.send('setGitStatus', JSON.stringify(resultsCache[key]));
 			}
 		}
+
+		win.webContents.send('setVersionDisplay', app.getVersion());
+
 		var interval = store.get('interval');
 		//console.log('interval: '.concat(interval));
 		mainLoop();
-		//mainLoopInterval = setInterval(mainLoop, interval);
+
+		if (mainLoopInterval) {
+			clearInterval(mainLoopInterval);
+		}
+
+		mainLoopInterval = setInterval(mainLoop, interval);
 	});
 
 	win.on('minimize', function (event) {
 		event.preventDefault();
 		
-
 		if (!store.get('didShowMinToTrayWarning')) {
 			store.set('didShowMinToTrayWarning', true);
 			dialog.showMessageBox(
@@ -112,7 +129,7 @@ function onReady() {
 					buttons: ['Yes', 'No'],
 					title: 'Where\'s my window?',
 					type: 'warning',
-					message: 'Always minimize to tray? Can be changed later in settings.', 	
+					message: 'Always minimize to tray? Can be changed later in settings.'
 				},
 				function (response, checked) {
 					if (response === 0) {
@@ -138,6 +155,7 @@ function onReady() {
 		if (store.get('alwaysMinimizeToTray'))
 			setTrayIcon(true);
 	});
+
 }
 
 function initHotKeys() {
@@ -154,9 +172,20 @@ function initHotKeys() {
 		store.set('zoomAdjustment', 0);
 	});
 
+	globalShortcut.register('CommandOrControl+Shift+I', () => {
+		win.toggleDevTools();
+	});
+
 	electronLocalShortCut.register(win, 'F5', () => {
-		handleColorCssInsertion();
-		mainLoop();
+
+		store = new Store(storeDefaults);
+		let { width, height } = store.get('windowBounds');
+		win.setSize(width, height);
+
+		win.loadURL(`file:///${__dirname}/index.html`);
+		handleColorCssInsertion();		
+
+		// reset of zoom, mainLoopInterval, and resultsCache all handled by 'dom-ready'
 	});
 }
 
@@ -169,18 +198,18 @@ function handleColorCssInsertion() {
 	cssColorPathUser = path.join(userDataPath, 'colors.css');
 	if (!fs.existsSync(cssColorPathUser)) {
 		if (!fs.existsSync(cssColorPathDefault)) {
-			console.log(
+			console.error(
 				'ERROR! cannot find default css at: \''.concat(cssColorPathDefault).concat('\''));
 		} else {
 			fs.copyFileSync(cssColorPathDefault, cssColorPathUser);
-			console.log('Copying default css to: ' + cssColorPathUser);
+			//console.log('Copying default css to: ' + cssColorPathUser);
 		}
 	}
 
 	if (!fs.existsSync(cssColorPathUser)) {
 		dialog.showErrorBox(
 			'CSS Load error!',
-			'Could not find user css file: ' + cssColorPathUser);
+			'Could not find user css file at: ' + cssColorPathUser);
 	} else {
 		win.webContents.on('did-finish-load', function () {
 			fs.readFile(cssColorPathUser, (err, data) => {
@@ -192,9 +221,10 @@ function handleColorCssInsertion() {
 								'Something went way wrong. Could not load default CSS at: '
 								+ cssColorPathDefault);
 						} else {
+							/*
 							console.log(
 								'importing DEFAULT color.css: ' + cssColorPathDefault);
-
+								*/
 							var formatedData =
 								dataDef.toString().replace(/\s{2,10}/g, ' ').trim();
 
@@ -202,12 +232,12 @@ function handleColorCssInsertion() {
 							win.webContents.insertCSS(formatedData);
 						}
 					});
-					console.log('error loading user color.css: '.concat(err));
+					console.error('error loading user color.css: '.concat(err));
 				} else {
-					console.log('importing USER color.css: ' + cssColorPathUser);
+					//console.log('importing USER color.css: ' + cssColorPathUser);
 
 					var formatedData = data.toString().replace(/\s{2,10}/g, ' ').trim();
-					console.log(formatedData);
+					//console.log(formatedData);
 					win.webContents.insertCSS(formatedData);
 				}
 			});
@@ -502,7 +532,7 @@ function mainLoop() {
 	for (key in resultsCache) {
 		try {
 			var dir = key;
-			console.log('Scanning: ' + dir);
+			//console.log('Scanning: ' + dir);
 			gitHandler.scanDirectory(
 				dir,
 				handleScanResult,
@@ -519,8 +549,8 @@ function mainLoop() {
 }
 
 function handleScanResult(result) {
-	var json = JSON.stringify(result);
-	console.log('scanDirectory result: ' + json);
+	//var json = JSON.stringify(result);
+	//console.log('scanDirectory result: ' + json);
 
 	resultsCache[result.dir] = result;
 
@@ -539,13 +569,16 @@ function updateBadge() {
 		}
 
 		if (outOfDateCount > 0) {
+			if (!win || !win.webContents)
+				return;
+
 			win.webContents.send('setBadge', true);
 
 			if (appTrayIcon) {
 				appTrayIcon.setImage('./media/tray-icon-overlay.png');
 				appTrayIcon.setToolTip('Repos out of date: '.concat(outOfDateCount));
 			}
-			console.log('should set badge');
+			//console.log('should set badge');
 			return;
 		}
 	}

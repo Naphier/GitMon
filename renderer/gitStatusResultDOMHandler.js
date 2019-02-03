@@ -5,7 +5,7 @@ ipcRenderer.on('setGitStatus', function (event, gitStatusResult) {
 	}
 
 	document.getElementById("welcome").style.display = "none";
-	console.log(gitStatusResult);
+	//console.log(gitStatusResult);
 	var status = JSON.parse(gitStatusResult);
 	var statusDivNode = document.getElementById(status.proj);
 	if (statusDivNode) {

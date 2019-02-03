@@ -102,8 +102,6 @@
 			<br>
 			Press the <i class="fas fa-plus-circle"></i> button to add or scan from repositories.
 			<br><br>
-			<span id="version">v0.0.0</span>
-			<br><br>
 			<a href="https://naplandgames.com/" target="_blank">
 				Created by Sean Mann (Naphier) - Napland Games, LLC
 				<i class="fas fa-external-link-alt"></i>
@@ -120,7 +118,7 @@
 			</a>
 			<br><br>
 			<b>Shortcuts:</b><br>
-			Refresh list: F5<br>
+			Refresh list, colors.css, and userprefs.json: F5<br>
 			Zoom In: Ctrl/Cmd + =<br>
 			Zoom Out: Ctrl/Cmd + -<br>
 			Reset Zoom: Ctrl/Cmd + 0<br>
@@ -128,9 +126,10 @@
 			<b>Legend:</b><br />
 			<img src="media/legend.png" style="width:100%" />
 			<p>
-				Node JS Version: <script>document.write(process.versions.node)</script><br>
-				Chrome Version: <script>document.write(process.versions.chrome)</script><br>
-				Electron Version: <script>document.write(process.versions.electron)</script>
+				GitMon version: <span id="version">v0.0.0</span><br>
+				Node JS Version: <span id="nodejsversion"></span><br>
+				Chrome Version: <span id="chromeversion"></span><br>
+				Electron Version: <span id="electronversion"></span>
 			</p>
 		</div>
 	</div>
@@ -147,6 +146,7 @@
 	<script src="renderer/externalLinkHandler.js"></script>
 	<script src="renderer/gitStatusResultDOMHandler.js"></script>
 	<script src="renderer/zoomHandler.js"></script>
+	<script src="renderer/versionDisplayer.js"></script>
 
 	<!-- Preloader after all DOM loaded! -->
 	<script src="renderer/preloader.js"></script>
