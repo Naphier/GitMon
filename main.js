@@ -525,7 +525,7 @@ function sortResultsCache() {
 
 // TODO schedule runs
 function mainLoop() {
-	console.log('mainLoop');
+	console.log('mainLoop at '.concat(new Date()));
 	// if we loop through and do fetches then refresh is not needed
 	// refreshStatusListUi();
 
