@@ -6,7 +6,7 @@ const electronLocalShortCut = require('electron-localshortcut');
 const fs = require('fs');
 const path = require('path');
 const GitHandler = require('./gitHandler.js');
-
+const AutoLaunch = require('auto-launch');
 
 let win;
 let appTrayIcon = null;
@@ -18,7 +18,7 @@ let scanRequest = { done: false, id: 0, expected: 0, reported: 0, addedProjs: []
 let suspended = false;
 
 // turn off debugging for non-dev environments
-var debug = ['BIGDADDY', 'SOMEOTHERCOMPUTERNAME'].includes(process.env.COMPUTERNAME);
+var debug = false; //['BIGDADDY', 'SOMEOTHERCOMPUTERNAME'].includes(process.env.COMPUTERNAME);
 if (!debug) {
 	console.log('console.log is disabled in non-dev environment');
 	console.log = function () { };
@@ -57,6 +57,20 @@ app.on('activate', () => {
 });
 
 app.setAppUserModelId(process.execPath);
+
+if (!debug) {
+	var gitMonAutoLauncher = new AutoLaunch({ name: 'GitMon' });
+	gitMonAutoLauncher.enable();
+
+	gitMonAutoLauncher.isEnabled().then(function (isEnabled) {
+		if (isEnabled)
+			return;
+
+		gitMonAutoLauncher.enable();
+	}).catch(function (err) {
+		console.error(err);
+	});
+}
 
 function onReady() {
 	let { width, height } = store.get('windowBounds');

@@ -63,3 +63,4 @@ typings/
 .vs
 bin
 obj
+/dist
