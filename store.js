@@ -7,11 +7,27 @@ class Store {
 		const userDataPath = (electron.app || electron.remote.app).getPath('userData');
 		this.path = path.join(userDataPath, opts.configName + '.json');
 		//console.log('settings path: ' + this.path);
+		this.defaults = opts.defaults;
 		this.data = parseDataFile(this.path, opts.defaults);
+
+		var aKey;
+
+		for (var key in this.defaults) {
+			aKey = key;
+			if (!this.data.hasOwnProperty(key))
+				this.data[key] = this.defaults[key];
+		}
+
+		if (aKey) {
+			this.set(aKey, this.data[aKey]);
+		}
 	}
 
 	get(key) {
-		return this.data[key];
+		if (this.data.hasOwnProperty(key))
+			return this.data[key];
+		else
+			return this.defaults[key];
 	}
 
 	set(key, val) {

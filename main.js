@@ -1,4 +1,5 @@
-const { remote, app, BrowserWindow, dialog, globalShortcut, Tray, Menu, nativeImage } = require('electron');
+const { remote, app, BrowserWindow, dialog, globalShortcut, Tray, Menu, nativeImage, Notification } = require('electron');
+const electron = require('electron');
 const ipcMain = require('electron').ipcMain;
 const Store = require('./store.js');
 const electronLocalShortCut = require('electron-localshortcut');
@@ -14,6 +15,7 @@ let resultsCache = new Object();
 let mainLoopInterval = null;
 let cssColorPathUser = null;
 let scanRequest = { done: false, id: 0, expected: 0, reported: 0, addedProjs: [], failedDirs: [] };
+let suspended = false;
 
 // turn off debugging for non-dev environments
 var debug = ['BIGDADDY', 'SOMEOTHERCOMPUTERNAME'].includes(process.env.COMPUTERNAME);
@@ -29,7 +31,10 @@ const storeDefaults = {
 		zoomAdjustment: 0,
 		interval: 300000, // 5 minutes
 		didShowMinToTrayWarning: false,
-		alwaysMinimizeToTray: false
+		alwaysMinimizeToTray: false,
+		lastNotificationTime: 0,
+		msBetweenNotifications: 300000,
+		notificationsOn: true
 	}
 };
 
@@ -50,6 +55,8 @@ app.on('activate', () => {
 		onReady();
 	}
 });
+
+app.setAppUserModelId(process.execPath);
 
 function onReady() {
 	let { width, height } = store.get('windowBounds');
@@ -156,6 +163,31 @@ function onReady() {
 			setTrayIcon(true);
 	});
 
+	if (store.get('lastNotificationTime') <= 0) {
+		store.set('lastNotificationTime', Date.now());
+	}
+
+	if (store.get('alwaysMinimizeToTray')) {
+		win.hide();
+		setTrayIcon(true);
+	}
+
+	electron.powerMonitor.on('suspend', () => {
+		suspended = true;
+		if (mainLoopInterval) {
+			clearInterval(mainLoopInterval);
+		}
+	});
+
+	electron.powerMonitor.on('resume', () => {
+		var interval = store.get('interval');
+		suspended = false;
+		if (mainLoopInterval) {
+			clearInterval(mainLoopInterval);
+		}
+
+		mainLoopInterval = setInterval(mainLoop, interval);
+	});
 }
 
 function initHotKeys() {
@@ -248,31 +280,34 @@ function handleColorCssInsertion() {
 
 function setTrayIcon(on) {
 	if (on) {
-
-		appTrayIcon = new Tray('./media/icon.png');
-		var contextMenu = Menu.buildFromTemplate([
-			{
-				label: 'Show', click: function () {
-					win.show();
+		if (appTrayIcon === null) {
+			appTrayIcon = new Tray('./media/icon.png');
+			var contextMenu = Menu.buildFromTemplate([
+				{
+					label: 'Show', click: function () {
+						win.show();
+					}
+				},
+				{
+					label: 'Quit', click: function () {
+						app.isQuitting = true;
+						app.quit();
+					}
 				}
-			},
-			{
-				label: 'Quit', click: function () {
-					app.isQuitting = true;
-					app.quit();
-				}
-			}
-		]);
+			]);
 
-		appTrayIcon.on('double-click', function () {
-			win.show();
-		});
+			appTrayIcon.on('double-click', function () {
+				win.show();
+			});
 
-		appTrayIcon.setContextMenu(contextMenu);
+			appTrayIcon.setContextMenu(contextMenu);
+		}
 		updateBadge();
 	} else {
+		/*
 		appTrayIcon.setHighlightMode('always');
 		appTrayIcon.destroy();
+		appTrayIcon = null;
 
 		if (!appIconImg) {
 			appIconImg = nativeImage.createFromPath('./media/icon.png');
@@ -280,6 +315,7 @@ function setTrayIcon(on) {
 
 		console.log('should set appIconImg: '.concat(appIconImg));
 		win.setIcon(appIconImg);
+		*/
 		updateBadge();
 	}
 }
@@ -378,6 +414,9 @@ function setupRpcs() {
 					}
 				});
 		}		
+
+		if (validDirs.length > 0)
+			updateBadge();
 	});
 
 	ipcMain.on('removeProject', function (event, status) {
@@ -526,6 +565,11 @@ function sortResultsCache() {
 // TODO schedule runs
 function mainLoop() {
 	console.log('mainLoop at '.concat(new Date()));
+	if (suspended) {
+		console.log('suspended');
+		return;
+	}
+
 	// if we loop through and do fetches then refresh is not needed
 	// refreshStatusListUi();
 
@@ -558,6 +602,7 @@ function handleScanResult(result) {
 	updateBadge();
 }
 
+let badgeIconOn = false;
 function updateBadge() {
 	if (resultsCache) {
 		var outOfDateCount = 0;
@@ -572,7 +617,31 @@ function updateBadge() {
 			if (!win || !win.webContents)
 				return;
 
-			win.webContents.send('setBadge', true);
+			if (!badgeIconOn)
+				win.webContents.send('setBadge', true);
+
+			if (store.get('notificationsOn') &&
+				Date.now() - store.get('lastNotificationTime') >
+				store.get('msBetweenNotifications')) {
+
+				store.set('lastNotificationTime', Date.now());
+
+				if (Notification.isSupported()) {
+					console.log('should show notification');
+					var notif = new Notification({
+						title: outOfDateCount.toString() + ' repos are out of date!',
+						icon: appIconImg
+					});
+
+					notif.on('click', () => {
+						win.show();
+					});
+
+					notif.show();
+				}
+			}
+
+			badgeIconOn = true;
 
 			if (appTrayIcon) {
 				appTrayIcon.setImage('./media/tray-icon-overlay.png');
@@ -583,9 +652,13 @@ function updateBadge() {
 		}
 	}
 	//console.log('should unset badge');
-	win.webContents.send('setBadge', false);
-	if (appTrayIcon) {
-		appTrayIcon.setImage('./media/icon.png');
-		appTrayIcon.setToolTip('All up to date :)');
+	if (badgeIconOn) {
+		win.webContents.send('setBadge', false);
+
+		if (appTrayIcon) {
+			appTrayIcon.setImage('./media/icon.png');
+			appTrayIcon.setToolTip('All up to date :)');
+		}
 	}
+	badgeIconOn = false;
 }

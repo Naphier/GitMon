@@ -23,67 +23,77 @@ function strFormat(str, obj) {
 class GitHandler {
 	// TODO: handle --show-stash
 	runFetch(dir, onSuccess, onError) {
-		ChildProcess.exec(
-			'git fetch',
-			{ cwd: dir },
-			(err, stdOut, stdErr) => {
-				if (err) {
-					if (err.message.includes('Not a git repository')) {
-						onError(new GitError(
-							GitErrType.NotAGitDir,
-							'\''.concat(dir).concat('\' is not a git repo directory.')));
-					} else {
-						onError(new GitError(
-							GitErrType.Unknown,
-							'Unknown error at directory: \''.concat(dir).concat('\'')));
+		try {
+			ChildProcess.exec(
+				'git fetch',
+				{ cwd: dir },
+				(err, stdOut, stdErr) => {
+					if (err) {
+						if (err.message.includes('Not a git repository')) {
+							onError(new GitError(
+								GitErrType.NotAGitDir,
+								'\''.concat(dir).concat('\' is not a git repo directory.')));
+						} else {
+							onError(new GitError(
+								GitErrType.Unknown,
+								'Unknown error at directory: \''.concat(dir).concat('\'')));
+						}
+
+						console.error('runFetch child-process err: \r\n'.concat(err));
+						console.error('runFetch \''.concat(dir).concat('\' stdErr:\r\n').concat(stdErr));
+						return;
 					}
 
-					console.error('runFetch child-process err: \r\n'.concat(err));
-					console.error('runFetch \''.concat(dir).concat('\' stdErr:\r\n').concat(stdErr));
-					return;
+					//console.log('runFetch: \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
+
+					onSuccess(dir);
 				}
-
-				//console.log('runFetch: \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
-
-				onSuccess(dir);
-			}
-		);
+			);
+		}
+		catch (ex) {
+			console.error(ex);
+		}
 	}
 
 	runStatus(dir, onSuccess, onError) {
-		ChildProcess.exec(
-			'git status --porcelain=v1 --branch --untracked=all',
-			{ cwd: dir },
-			(err, stdOut, stdErr) => {
-				if (err) {
-					if (err.message.includes('Not a git repository')) {
-						onError(new GitError(
-							GitErrType.NotAGitDir,
-							'\''.concat(dir).concat('\' is not a git repo directory.')));
-					} else {
-						onError(new GitError(
-							GitErrType.Unknown,
-							'Unkown error at directory: \''.concat(dir).concat('\'')));
+		try {
+			ChildProcess.exec(
+				'git status --porcelain=v1 --branch --untracked=all',
+				{ cwd: dir },
+				(err, stdOut, stdErr) => {
+					if (err) {
+						if (err.message.includes('Not a git repository')) {
+							onError(new GitError(
+								GitErrType.NotAGitDir,
+								'\''.concat(dir).concat('\' is not a git repo directory.')));
+						} else {
+							onError(new GitError(
+								GitErrType.Unknown,
+								'Unkown error at directory: \''.concat(dir).concat('\'')));
+						}
+
+						console.error('runStatus child-process err: \r\n'.concat(err));
+						console.error('runStatus \''.concat(dir).concat('\' stdErr:\r\n').concat(stdErr));
+						return;
 					}
 
-					console.error('runStatus child-process err: \r\n'.concat(err));
-					console.error('runStatus \''.concat(dir).concat('\' stdErr:\r\n').concat(stdErr));
-					return;
-				}
+					//console.log('runStatus \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
 
-				//console.log('runStatus \''.concat(dir).concat('\' stdOut:\r\n').concat(stdOut));
+					var result = this.parseStatus(stdOut);
 
-				var result = this.parseStatus(stdOut);
+					// Try to parse out the directory
+					result.proj = dir.substr(dir.lastIndexOf('/') + 1);
+					if (result.proj === dir)
+						result.proj = dir.substr(dir.lastIndexOf('\\') + 1);
 
-				// Try to parse out the directory
-				result.proj = dir.substr(dir.lastIndexOf('/') + 1);
-				if (result.proj === dir)
-					result.proj = dir.substr(dir.lastIndexOf('\\') + 1);
+					result.dir = dir;
 
-				result.dir = dir;
-
-				onSuccess(result);
-			});
+					onSuccess(result);
+				});
+		}
+		catch (ex) {
+			console.error(ex);
+		}
 	}
 
 	parseStatus(output) {
