@@ -13,6 +13,7 @@
 	border-radius: 5px;
 	display: block;
 	padding: 5px;
+	margin-bottom: 5px;
 }
 
 #addButton {
@@ -47,4 +48,8 @@
 	border-radius: 5px;
 	padding: 10px;
 	margin: 10px;
+}
+
+.centered {
+	text-align: center;
 }

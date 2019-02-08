@@ -1,19 +1,15 @@
-var ipcRendererStatus = require('electron').ipcRenderer;
-//const { shell } = require('electron');
-
-ipcRendererStatus.on('setGitStatus', function (event, gitStatusResult) {
+ipcRenderer.on('setGitStatus', function (event, gitStatusResult) {
 	var template = document.getElementById('testProj');
 	if (template) {
 		template.parentNode.removeChild(template);
 	}
 
 	document.getElementById("welcome").style.display = "none";
-	console.log(gitStatusResult);
+	//console.log(gitStatusResult);
 	var status = JSON.parse(gitStatusResult);
 	var statusDivNode = document.getElementById(status.proj);
 	if (statusDivNode) {
-		//TODO update element
-		console.log('update element');
+		document.removeChild(statusDivNode);
 	} else {
 		// create element and insert into dom
 		statusDivNode = document.createElement('span');
@@ -31,7 +27,7 @@ ipcRendererStatus.on('setGitStatus', function (event, gitStatusResult) {
 		projNameNode.classList.add('projectName');
 		projNameNode.innerHTML = status.proj;
 		projNameNode.addEventListener('click', function () {
-			console.log('clicked project name');
+			//console.log('clicked project name');
 			shell.showItemInFolder(status.dir);
 		});
 		statusDivNode.appendChild(projNameNode);
@@ -71,26 +67,39 @@ ipcRendererStatus.on('setGitStatus', function (event, gitStatusResult) {
 			statusDivNode.appendChild(untrackedNode);
 		}
 
-		// delete and modify buttons
+		// delete button
 		var trashNode = document.createElement('span');
 		trashNode.classList.add('trashButton');
 		trashNode.innerHTML = '<i class="far fa-trash-alt"></i>';
 		trashNode.addEventListener('click', function () {
-			// TODO remove project handler
-			console.log('trash clicked for: ' + status.proj);
+			ipcRenderer.send('removeProject', status);
+			//console.log('trash clicked for: ' + status.proj);
 		});
 		statusDivNode.appendChild(trashNode);
 
+		/*
 		var editNode = document.createElement('span');
 		editNode.classList.add('editButton');
 		editNode.innerHTML = '<i class="far fa-edit"></i>';
 		editNode.addEventListener('click', function () {
-			// TODO edit project handler
 			console.log('edit clicked for: ' + status.proj);
 		});
 		statusDivNode.appendChild(editNode);
+		*/
 
 		document.getElementById('home').appendChild(statusDivNode);
 	}
+});
 
+ipcRenderer.on('clearDirectories', function (event, showWelcome) {
+	var homeDivNode = document.getElementById('home');
+	if (showWelcome)
+		document.getElementById("welcome").style.display = "";
+	var childArray = Array.prototype.slice.call(homeDivNode.childNodes);
+	var count = childArray.length;
+	for (var i = 0; i < count; i++) {
+		if (childArray[i].id !== 'welcome') {
+			homeDivNode.removeChild(childArray[i]);
+		}
+	}
 });

@@ -3,6 +3,8 @@
 	padding: 0px;
 }
 .hamburgerContainer {
+	position: fixed;
+	top: 20px;
 	display: inline-block;
 	cursor: pointer;
 	padding: 5px 0px 0px 8px;
@@ -34,15 +36,16 @@
 
 /* The side navigation menu */
 .sidenav {
-	height: 100%; 
-	width: 0; 
-	position: fixed; 
+	height: 100%;
+	position: fixed;
 	z-index: -1;
 	top: 24px;
 	left: 0;
-	overflow-x: hidden; 
-	padding-top: 45px; 
-	transition: 0.5s; 
+	overflow-x: hidden;
+	padding-top: 45px;
+	transition: 0.5s;
+	width: 50px;
+	text-align: center
 }
 
 .sidenavLabelFas {

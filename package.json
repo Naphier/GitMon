@@ -1,19 +1,56 @@
 {
-	"name": "git-mon",
-	"version": "0.0.0",
-	"description": "A simple GIT repository monitor widget to let you see you've not committed something!",
+	"name": "GitMon",
+	"version": "0.0.1",
+	"description": "A simple GIT repository monitor widget to let you see you've not committed something or you need to pull in updates!",
 	"main": "main.js",
-	"author": "Naphier",
+	"author": "Naphier (Sean Mann)",
 	"scripts": {
-		"start": "electron .",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"postinstall": "install-app-deps",
+		"start": "npm install && electron .",
+		"pack": "build --dir",
+		"dist": "build"
 	},
-	"keywords": [],
+	"build": {
+		"appId": "com.naplandgames.gitmon",
+		"dmg": {
+			"contents": [
+				{
+					"x": 110,
+					"y": 150
+				},
+				{
+					"x": 240,
+					"y": 150,
+					"type": "link",
+					"path": "/Applications"
+				}
+			]
+		},
+		"win": {
+			"target": "NSIS",
+			"icon": "build/icon.ico"
+		},
+		"extraResources": [
+			"extraResources/**/*"
+		]
+	},
+	"keywords": [
+		"tools",
+		"source control",
+		"windows",
+		"git",
+		"monitor",
+		"widget"
+	],
 	"license": "ISC",
 	"devDependencies": {
-		"electron": "^4.0.1"
+		"auto-launch": "^5.0.5",
+		"electron": "^4.0.1",
+		"electron-builder": "^20.38.5"
 	},
 	"dependencies": {
-		"child_process": "^1.0.2"
+		"child_process": "^1.0.2",
+		"electron-shortcut": "^0.5.0",
+		"auto-launch": "^5.0.5"
 	}
 }

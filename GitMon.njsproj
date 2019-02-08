@@ -5,10 +5,13 @@
     <Name>GitMon</Name>
     <RootNamespace>GitMon</RootNamespace>
     <SaveNodeJsSettingsInProjectFile>True</SaveNodeJsSettingsInProjectFile>
-    <NodeExePath>C:\Program Files\nodejs\node.exe</NodeExePath>
-    <NodeExeArguments>
-    </NodeExeArguments>
+    <NodeExePath>D:\@Documents\My Open Source Repos\GitMon\node_modules\electron\dist\electron.exe</NodeExePath>
+    <NodeExeArguments>main.js</NodeExeArguments>
     <JavaScriptTestFramework>ExportRunner</JavaScriptTestFramework>
+    <ScriptArguments>--inspect-brk</ScriptArguments>
+    <DebuggerPort>5858</DebuggerPort>
+    <NodejsPort>
+    </NodejsPort>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -24,7 +27,7 @@
     <OutputPath>.</OutputPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
-    <StartWebBrowser>False</StartWebBrowser>
+    <StartWebBrowser>True</StartWebBrowser>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,49 +36,41 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="badgeHandler.js">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="directoryPickerCaller.js">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="externalLinkHandler.js" />
-    <Compile Include="gitStatusResultDOMHandler.js">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="main.js" />
-    <Compile Include="mainDivSizeHandler.js" />
-    <Compile Include="sidenav.js">
+    <Compile Include="renderer\badgeHandler.js" />
+    <Compile Include="renderer\directoryPickerCaller.js" />
+    <Compile Include="renderer\externalLinkHandler.js" />
+    <Compile Include="gitHandler.js">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="renderer\gitStatusResultDOMHandler.js" />
+    <Compile Include="renderer\mainDivSizeHandler.js" />
+    <Compile Include="renderer\preloader.js" />
+    <Compile Include="renderer\sidenav.js" />
+    <Compile Include="renderer\titlebar.js" />
+    <Compile Include="renderer\versionDisplayer.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="renderer\zoomHandler.js" />
+    <Compile Include="renderer\_requires.js" />
     <Compile Include="store.js">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="titlebar.js">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="zoomHandler.js">
-      <SubType>Code</SubType>
-    </Compile>
-    <Content Include="colors.css">
-      <SubType>Code</SubType>
-    </Content>
-    <Content Include="content.css">
-      <SubType>Code</SubType>
-    </Content>
-    <Content Include="icon.png" />
-    <Content Include="license.md" />
-    <Content Include="sidenav.css">
-      <SubType>Code</SubType>
-    </Content>
+    <Content Include="css\content.css" />
+    <Content Include="css\preloader.css" />
+    <Content Include="css\scrollbar.css" />
+    <Content Include="css\sidenav.css" />
+    <Content Include="css\titlebar.css" />
+    <Content Include="extraResources\colors.css" />
     <Content Include="index.html">
       <SubType>Code</SubType>
     </Content>
     <Content Include="package.json" />
-    <Content Include="README.md" />
-    <Content Include="titlebar.css">
-      <SubType>Code</SubType>
-    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="css\" />
+    <Folder Include="extraResources\" />
+    <Folder Include="renderer\" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="False" />

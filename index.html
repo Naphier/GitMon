@@ -5,14 +5,20 @@
 	<title>GitMon</title>
 	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
-	<link rel="stylesheet" href="colors.css" />
-	<link rel="stylesheet" href="sidenav.css" />
-	<link rel="stylesheet" href="titlebar.css" />
-	<link rel="stylesheet" href="content.css" />
-	<script src="sidenav.js"></script>
+	<link rel="stylesheet" href="css/preloader.css" />
+	<!-- I really don't like commenting this out! -->
+	<!-- <link rel="stylesheet" href="css/colors.css" /> -->
+	<link rel="stylesheet" href="css/sidenav.css" />
+	<link rel="stylesheet" href="css/titlebar.css" />
+	<link rel="stylesheet" href="css/content.css" />
+	<link rel="stylesheet" href="css/scrollbar.css" />
 </head>
 <body>
-	<div id="addButton" onclick="show('projects')"><i class="fas fa-plus-circle"></i></div>
+	<div id="loaderContainer">
+		<div class="loader"></div>
+	</div>
+	<!--<div id="addButton" onclick="show('projects')"><i class="fas fa-plus-circle"></i></div>-->
+	<div id="mainContentContainer">
 	<div id="title-bar">
 		<div id="title">GitMon</div>
 		<div id="title-bar-btns">
@@ -27,13 +33,13 @@
 			<div class="bar2"></div>
 			<div class="bar3"></div>
 		</div>
-		<div id="sidenavMenu" class="sidenav" style="width:50px">
+		<div id="sidenavMenu" class="sidenav">
 			<a href="#" onclick="show('home')">
 				<i class="sidenavLabelFas fas fa-home"></i>
 				<div class="sidenavLabel">Home</div>
 			</a>
 			<a href="#" onclick="show('projects')">
-				<i class="sidenavLabelFas fas fa-copy" style="padding-left:5px"></i>
+				<i class="sidenavLabelFas fas fa-plus-circle"></i>
 				<div class="sidenavLabel">Repos</div>
 			</a>
 			<a href="#" onclick="show('settings')">
@@ -49,23 +55,52 @@
 
 	<div id="main">
 		<div id="home" class="hideContent">
-			<!-- TODO repo sorting? -->
+			<!--<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>-->
+			<!--<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
 			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>
+			<span class="status" id="testProj"><span class="alertIcon"><i class="fas fa-exclamation-triangle"></i></span><span class="projectName">JsonNetAndTwitterTutorial</span><span class="ahead">+1</span><span class="behind">-1</span><span class="stage">M1(1)</span><span class="untracked">?3</span><span class="trashButton"><i class="far fa-trash-alt"></i></span><span class="editButton"><i class="far fa-edit"></i></span></span>-->
 			<div id="welcome">Welcome! Press the <i class="fas fa-plus-circle"></i> button below to add or scan from repositories.</div>
 		</div>
 		<div id="projects" class="hideContent" style="text-align:center">
-			Add a new repository to monitor.<br />
-			<button class="pageButton" onclick="pickDirectory()">Single Directory</button><br />
-			<button class="pageButton" onclick="scanDirectory();">Scan Directories</button><br />
-			<!-- TODO remove all repos -->
+			<div class="centered">
+				Add a new repository to monitor.<br />
+				<button class="pageButton" onclick="pickDirectory()">Single Directory</button><br />
+				<button class="pageButton" onclick="scanDirectory();">Scan Directories</button><br />
+				<button class="pageButton" onclick="removeAllDirectories()">Remove All Repos</button>
+			</div>
 		</div>
-		<div id="settings" class="hideContent">Settings content</div>
+		<div id="settings" class="hideContent">
+			<div class="centered">
+				<button class="pageButton" onclick="openSettingsFile()">Open Settings</button>
+				<!-- TODO open colors css file -->
+				<button class="pageButton" onclick="openColorsCss()">Open Colors CSS</button>
+			</div>
+		</div>
 		<div id="about" class="hideContent">
 			GitMon is a simple git repository monitor to let you know you've got changes to commit.
 			<br>
-			Press the <i class="fas fa-plus-circle"></i> button below to add or scan from repositories.
-			<br><br>
-			<span id="version">v0.0.0</span>
+			Press the <i class="fas fa-plus-circle"></i> button to add or scan from repositories.
 			<br><br>
 			<a href="https://naplandgames.com/" target="_blank">
 				Created by Sean Mann (Naphier) - Napland Games, LLC
@@ -83,25 +118,38 @@
 			</a>
 			<br><br>
 			<b>Shortcuts:</b><br>
+			Refresh list, colors.css, and userprefs.json: F5<br>
 			Zoom In: Ctrl/Cmd + =<br>
 			Zoom Out: Ctrl/Cmd + -<br>
 			Reset Zoom: Ctrl/Cmd + 0<br>
 			<br>
 			<b>Legend:</b><br />
-			<img src="legend.png" style="width:100%" />
-			<!-- TODO button to open user prefs file -->
-			<!-- TODO button to open colors css -->
-			
+			<img src="media/legend.png" style="width:100%" />
+			<p>
+				GitMon version: <span id="version">v0.0.0</span><br>
+				Node JS Version: <span id="nodejsversion"></span><br>
+				Chrome Version: <span id="chromeversion"></span><br>
+				Electron Version: <span id="electronversion"></span>
+			</p>
 		</div>
 	</div>
-
+	</div>
+	<script src="renderer/sidenav.js"></script>
+	<script src="renderer/mainDivSizeHandler.js"></script>
 	<script>show('home');</script>
-	<script src="titlebar.js"></script>
-	<script src="externalLinkHandler.js"></script>
-	<script src="gitStatusResultDOMHandler.js"></script>
-	<script src="badgeHandler.js"></script>
-	<script src="mainDivSizeHandler.js"></script>
-	<script src="zoomHandler.js"></script>
-	<script src="directoryPickerCaller.js"></script>
+	
+	<!-- Electron -->
+	<script src="renderer/_requires.js"></script>
+	<script src="renderer/titlebar.js"></script>
+	<script src="renderer/badgeHandler.js"></script>
+	<script src="renderer/directoryPickerCaller.js"></script>
+	<script src="renderer/externalLinkHandler.js"></script>
+	<script src="renderer/gitStatusResultDOMHandler.js"></script>
+	<script src="renderer/zoomHandler.js"></script>
+	<script src="renderer/versionDisplayer.js"></script>
+
+	<!-- Preloader after all DOM loaded! -->
+	<script src="renderer/preloader.js"></script>
+
 </body>
 </html>

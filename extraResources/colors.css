@@ -1,5 +1,21 @@
-*{
-	font-family:Roboto;
+// 0.0.1
+// Do not modify comment!
+// Do not input css before scrollbar styles!
+
+::-webkit-scrollbar-track {
+	background-color: #0c0c0c;
+}
+
+::-webkit-scrollbar {
+	background-color: black;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: #555;
+}
+
+* {
+	font-family: Roboto;
 }
 
 a, a:visited {
