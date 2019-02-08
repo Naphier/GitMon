@@ -56,12 +56,12 @@
     <Compile Include="store.js">
       <SubType>Code</SubType>
     </Compile>
-    <Content Include="css\colors.css" />
     <Content Include="css\content.css" />
     <Content Include="css\preloader.css" />
     <Content Include="css\scrollbar.css" />
     <Content Include="css\sidenav.css" />
     <Content Include="css\titlebar.css" />
+    <Content Include="extraResources\colors.css" />
     <Content Include="index.html">
       <SubType>Code</SubType>
     </Content>
@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="css\" />
+    <Folder Include="extraResources\" />
     <Folder Include="renderer\" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->

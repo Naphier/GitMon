@@ -18,7 +18,11 @@ let scanRequest = { done: false, id: 0, expected: 0, reported: 0, addedProjs: []
 let suspended = false;
 
 // turn off debugging for non-dev environments
-var debug = false; //['BIGDADDY', 'SOMEOTHERCOMPUTERNAME'].includes(process.env.COMPUTERNAME);
+// must run with VS debugger attached to process... sorry?
+console.log('argv: '.concat(process.argv));
+console.log('execArgv: '.concat(process.execArgv));
+const debug = process.argv.includes('--inspect-brk') || process.argv.includes('--vs');
+
 if (!debug) {
 	console.log('console.log is disabled in non-dev environment');
 	console.log = function () { };
@@ -72,9 +76,41 @@ if (!debug) {
 	});
 }
 
+function getExtraResourcesPath(fileName) {
+	var filePath = '';
+	if (debug) {
+		filePath = path.join(__dirname, 'extraResources', fileName);
+	} else {
+		filePath = path.join(process.resourcesPath, 'extraResources', fileName);
+	}
+
+	console.log('getExtraResouresPath - filePath: '.concat(filePath));
+	return filePath;
+}
+
+function getImagePath(fileName) {
+	var filePath = '';
+	if (debug) {
+		filePath = './extraResources/'.concat(fileName);
+	} else {
+		filePath = path.join(process.resourcesPath, 'extraResources', fileName);
+	}
+
+	console.log('getImagePath - filePath: '.concat(filePath));
+	return filePath;
+}
+
+
 function onReady() {
 	let { width, height } = store.get('windowBounds');
-	appIconImg = nativeImage.createFromPath('./media/icon.png');
+	appIconImg = nativeImage.createFromPath(getImagePath('icon.png'));// './media/icon.png');
+
+	console.log('appIconImg empty? '.concat(appIconImg.isEmpty()));
+
+	if (!appIconImg.isEmpty()) {
+		console.log('appIconImg.getSize(): '.concat(appIconImg.getSize().width));
+	}
+
 	win = new BrowserWindow({
 		width: width,
 		height: height,
@@ -89,8 +125,8 @@ function onReady() {
 	handleColorCssInsertion();
 	initHotKeys();
 
-	if (debug)
-		win.toggleDevTools();
+	//if (debug)
+	//	win.toggleDevTools();
 
 	// destroy dropdown menus
 	win.setMenu(null);
@@ -239,7 +275,15 @@ function initHotKeys() {
 function handleColorCssInsertion() {
 	var userDataPath = (app || remote.app).getPath('userData');
 
-	var cssColorPathDefault = './css/colors.css';
+	var cssColorPathDefault = getExtraResourcesPath('colors.css');// = './css/colors.css';
+	/*
+	if (debug) {
+		cssColorPathDefault = path.join(__dirname, 'extraResources/colors.css');
+	} else {
+		console.log('resourcePath: '.concat(process.resourcesPath));
+		cssColorPathDefault = path.join(process.resourcesPath, 'extraResources/colors.css');
+	}
+	*/
 
 	cssColorPathUser = path.join(userDataPath, 'colors.css');
 	if (!fs.existsSync(cssColorPathUser)) {
@@ -295,7 +339,7 @@ function handleColorCssInsertion() {
 function setTrayIcon(on) {
 	if (on) {
 		if (appTrayIcon === null) {
-			appTrayIcon = new Tray('./media/icon.png');
+			appTrayIcon = new Tray(getImagePath('icon.png'));// './media/icon.png');
 			var contextMenu = Menu.buildFromTemplate([
 				{
 					label: 'Show', click: function () {
@@ -481,6 +525,10 @@ function setupRpcs() {
 	ipcMain.on('getCssFile', function (e, d) {
 		win.webContents.send('settingsFilePathRetrieved', cssColorPathUser);
 	});
+
+	ipcMain.on('getBadgeImagePath', function (e, d) {
+		win.webContents.send('badgeImagePathReceived', getImagePath('icon-overlay.png'));
+	});
 }
 
 function reportScanResultsHandler() {
@@ -658,7 +706,7 @@ function updateBadge() {
 			badgeIconOn = true;
 
 			if (appTrayIcon) {
-				appTrayIcon.setImage('./media/tray-icon-overlay.png');
+				appTrayIcon.setImage(getImagePath('tray-icon-overlay.png'));// './media/tray-icon-overlay.png');
 				appTrayIcon.setToolTip('Repos out of date: '.concat(outOfDateCount));
 			}
 			//console.log('should set badge');
@@ -670,7 +718,7 @@ function updateBadge() {
 		win.webContents.send('setBadge', false);
 
 		if (appTrayIcon) {
-			appTrayIcon.setImage('./media/icon.png');
+			appTrayIcon.setImage(getImagePath('icon.png'));// './media/icon.png');
 			appTrayIcon.setToolTip('All up to date :)');
 		}
 	}

@@ -14,9 +14,9 @@ function toggleNav(caller) {
 		fasEl[i].style.opacity = sidenaveState ? "0" : "1";
 
 	var snlEl = document.getElementsByClassName('sidenavLabel');
-	console.log(snlEl.length);
+	//console.log(snlEl.length);
 	for (var j = 0; j < snlEl.length; j++) {
-		console.log(snlEl.innerHTML);
+		//console.log(snlEl.innerHTML);
 		snlEl[j].style.opacity = sidenaveState ? "1" : "0";
 	}
 }
