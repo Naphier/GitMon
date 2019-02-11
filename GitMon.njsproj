@@ -36,6 +36,9 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="fileLogger.js">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="main.js" />
     <Compile Include="renderer\badgeHandler.js" />
     <Compile Include="renderer\directoryPickerCaller.js" />
