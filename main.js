@@ -7,6 +7,9 @@ const fs = require('fs');
 const path = require('path');
 const GitHandler = require('./gitHandler.js');
 const AutoLaunch = require('auto-launch');
+const FileLogger = require('./fileLogger.js');
+
+
 
 let win;
 let appTrayIcon = null;
@@ -21,11 +24,13 @@ let suspended = false;
 // must run with VS debugger attached to process... sorry?
 console.log('argv: '.concat(process.argv));
 console.log('execArgv: '.concat(process.execArgv));
-const debug = process.argv.includes('--inspect-brk') || process.argv.includes('--vs');
+let debug = process.argv.includes('--inspect-brk') || process.argv.includes('--vs');
 
 if (!debug) {
 	console.log('console.log is disabled in non-dev environment');
-	console.log = function () { };
+
+	console = new FileLogger('log');
+	//console.log = function () { };
 }
 
 const storeDefaults = {
@@ -102,6 +107,7 @@ function getImagePath(fileName) {
 
 
 function onReady() {
+	app.setAppUserModelId('com.naplandgames.gitmon');
 	let { width, height } = store.get('windowBounds');
 	appIconImg = nativeImage.createFromPath(getImagePath('icon.png'));// './media/icon.png');
 
@@ -404,7 +410,7 @@ function setupRpcs() {
 		gitHandler.scanDirectory(
 			dir[0],
 			(result) => {
-				handleScanResult(result);
+				handleScanResult(result, true);
 				dialog.showMessageBox(null, {
 					buttons: ['OK'],
 					title: 'Success',
@@ -527,7 +533,12 @@ function setupRpcs() {
 	});
 
 	ipcMain.on('getBadgeImagePath', function (e, d) {
+		console.log('getBadgeImagePath');
 		win.webContents.send('badgeImagePathReceived', getImagePath('icon-overlay.png'));
+	});
+
+	ipcMain.on('log', function (e, d) {
+		console.log('[RENDERER] ' + d.toString());
 	});
 }
 
@@ -654,14 +665,16 @@ function mainLoop() {
 	updateBadge();
 }
 
-function handleScanResult(result) {
+function handleScanResult(result, doBadgeUpdate) {
 	//var json = JSON.stringify(result);
 	//console.log('scanDirectory result: ' + json);
 
 	resultsCache[result.dir] = result;
 
 	refreshStatusListUi();
-	updateBadge();
+
+	if (doBadgeUpdate)
+		updateBadge();
 }
 
 let badgeIconOn = false;
@@ -682,24 +695,38 @@ function updateBadge() {
 			if (!badgeIconOn)
 				win.webContents.send('setBadge', true);
 
+			var dTime = Date.now() - store.get('lastNotificationTime');
+
+			console.log('notificationsOn: '.concat(store.get('notificationsOn')));
+			console.log('Date.now(): '.concat(Date.now()));
+			console.log('lastNotiicationTime: '.concat(store.get('lastNotificationTime')));
+			console.log('dTime: '.concat(dTime));
+			console.log('msBetweenNotifications: '.concat(store.get('msBetweenNotifications')));
+			console.log('Notification.isSupported(): '.concat(Notification.isSupported()));
+
 			if (store.get('notificationsOn') &&
-				Date.now() - store.get('lastNotificationTime') >
+				dTime >
 				store.get('msBetweenNotifications')) {
 
 				store.set('lastNotificationTime', Date.now());
 
 				if (Notification.isSupported()) {
-					console.log('should show notification');
-					var notif = new Notification({
-						title: outOfDateCount.toString() + ' repos are out of date!',
-						icon: appIconImg
-					});
+					try {
+						console.log('should show notification');
+						var notif = new Notification({
+							title: outOfDateCount.toString() + ' repos are out of date!',
+							icon: appIconImg
+						});
 
-					notif.on('click', () => {
-						win.show();
-					});
+						notif.on('click', () => {
+							win.show();
+						});
 
-					notif.show();
+						notif.show();
+					} catch (e) {
+						console.error(e);
+					}
+					
 				}
 			}
 
