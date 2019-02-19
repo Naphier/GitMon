@@ -107,6 +107,11 @@ class GitHandler {
 		var untracked = 0;
 		var outOfDate = false;
 
+		if (!lines) {
+			console.error('parseStatus failure. lines is empty. output: '.concat(output));
+			return;
+		}
+
 		lines.forEach((item, index) => {
 			//console.log(index + ': '.concat(item));
 
