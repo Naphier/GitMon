@@ -1,6 +1,6 @@
 {
 	"name": "GitMon",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "A simple GIT repository monitor widget to let you see you've not committed something or you need to pull in updates!",
 	"main": "main.js",
 	"author": "Naphier (Sean Mann)",

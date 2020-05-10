@@ -645,6 +645,7 @@ function mainLoop() {
 
 	// if we loop through and do fetches then refresh is not needed
 	// refreshStatusListUi();
+	var errReport = '';
 
 	for (key in resultsCache) {
 		try {
@@ -654,12 +655,19 @@ function mainLoop() {
 				dir,
 				handleScanResult,
 				(error) => {
-					dialog.showErrorBox('No bueno!', error);
+					//dialog.showErrorBox('No bueno!', error);
+					if (error.gitErrType === 4) {
+						errReport = errReport.concat(error.message).concat('\r\n');
+					}
 				}
 			);
 		} catch (err) { 
 			//who cares
 		}
+	}
+
+	if (errReport !== '') {
+		dialog.showErrorBox('No bueno - Many errors! Check log!', errReport);
 	}
 
 	updateBadge();
