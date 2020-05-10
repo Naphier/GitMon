@@ -1,10 +1,13 @@
 const ChildProcess = require('child_process');
 
+let errorCount = 0;
+const MAX_ERRORS = 100;
 
 let GitErrType = {
 	None: 0,
 	NotAGitDir: 1,
-	Unknown: 3
+	Unknown: 3, 
+	Critical: 4
 };
 
 class GitError {
@@ -34,9 +37,17 @@ class GitHandler {
 								GitErrType.NotAGitDir,
 								'\''.concat(dir).concat('\' is not a git repo directory.')));
 						} else {
+							errorCount++;
+							var errType = GitErrType.Unknown;
+
+							if (errorCount >= MAX_ERRORS) {
+								errorCount = 0;
+								errType = GitErrType.Critical;
+							}
+
 							onError(new GitError(
-								GitErrType.Unknown,
-								'Unknown error at directory: \''.concat(dir).concat('\'')));
+								errType,
+								'Unknown error at directory: \''.concat(dir).concat('\'\r\nPlease review logs if this continues.')));
 						}
 
 						console.error('runFetch child-process err: \r\n'.concat(err));
@@ -202,12 +213,12 @@ class GitHandler {
 							onSuccess(result);
 					},
 					(err) => {
-						onError(err.message);						
+						onError(err);						
 					}
 				);
 			},
 			(err) => {
-				onError(err.message);
+				onError(err);
 			}
 		);
 	}
