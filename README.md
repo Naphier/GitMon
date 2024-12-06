@@ -5,3 +5,6 @@ It simply runs git fetch and git status on user-selected folders and displays a 
 
 
 ![](exclude/GitMon_v0.0.0.png)
+
+## Installation
+TEST
